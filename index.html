@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Discover and explore your loved movies with Lovescape!">
+    <title>Team = (Ritu , Rohan jha , Rohan singh , Suruchi)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header id="site-header">
+        <h1>MidnightFlix</h1>
+        
+        <p>Your ultimate movie discovery platform</p>
+    </header>
+
+    <div class="container">
+        <!-- Search Section -->
+        <div id="movie-search">
+            <input type="text" id="movie-input" placeholder="Search your favorite movie...">
+            <button id="search-btn">Search</button>
+        </div>
+
+        <!-- Filters Section -->
+        <div id="filters">
+            <label for="genre-filter">Genre:</label>
+            <select id="genre-filter">
+                <option value="">Select Genre</option>
+            </select>
+            
+            <label for="year-filter">Year:</label>
+            <select id="year-filter">
+                <option value="">Select Year</option>
+                <option value="25">2025</option>
+                <option value="24">2024</option>
+                <option value="23">2023</option>
+                <option value="22">2022</option>
+                <option value="21">2021</option>
+                <option value="20">2020</option>
+                <option value="19">2019</option>
+                <option value="18">2018</option>
+                <option value="17">2017</option>
+                <option value="16">2016</option>
+                <option value="15">2015</option>
+                <option value="14">2014</option>
+                <option value="13">2013</option>
+                <option value="12">2012</option>
+                <option value="11">2011</option>
+                <option value="10">2010</option>
+            </select>
+
+            
+            
+            <label for="rating-filter">Rating:</label>
+            <select id="rating-filter">
+                <option value="">Select Rating</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5+</option>
+                <option value="6">6+</option>
+                <option value="7">7+</option>
+                <option value="8">8+</option>
+                <option value="9">9+</option>
+            </select>
+            
+            <label for="language-filter">Language:</label>
+            <select id="language-filter">
+                <option value="">Select Language</option>
+                <option value="hi">Hindi</option>
+                <option value="en">English</option>
+            
+            </select>
+        </div>
+
+        <div id="recommendations"></div>
+        <div id="loading-spinner">Loading...</div>
+
+        <!-- Pagination Buttons -->
+        <div id="pagination-controls">
+            <button id="prev-btn">Previous</button>
+            <button id="next-btn">Next</button>
+        </div>
+
+        <!-- Movie Details Modal -->
+        <div id="movie-details-modal">
+            <div id="movie-details-content"></div>
+        </div>
+
+        <!-- Trailer Modal -->
+        <div id="trailer-modal" class="modal">
+            <div class="modal-content">
+                <span onclick="closeTrailer()" class="close-btn">&times;</span>
+                <div id="movie-trailer"></div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="script.js">
+        function applyFilters(){
+            alert("Filters applied succesfully");
+        }
+    </script>
+</body>
+</html>
