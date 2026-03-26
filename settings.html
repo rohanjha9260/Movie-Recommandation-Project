@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Settings - MidnightFlix">
+    <title>Settings | MidnightFlix</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+    <div class="page-bg"></div>
+    <header class="topbar">
+        <div class="brand">
+            <a href="index.html" class="brand-link">
+                <div class="brand-mark">MF</div>
+                <div>
+                    <h1>MidnightFlix</h1>
+                    <p>Smart movie discovery, tailored for you</p>
+                </div>
+            </a>
+        </div>
+        <nav class="topbar-nav">
+            <a href="index.html#features">Features</a>
+            <a href="index.html#app">Explore</a>
+            <a href="settings.html" class="active">Settings</a>
+        </nav>
+        <div class="topbar-actions">
+            <button id="theme-toggle" class="ghost-btn" type="button">
+                <span class="icon-sun">☀️</span>
+                <span class="icon-moon">🌙</span>
+            </button>
+            <button id="logout-btn" class="solid-btn" type="button">Log out</button>
+        </div>
+    </header>
+
+    <main class="settings-page">
+        <div class="settings-page-header">
+            <a href="index.html" class="back-link">← Back to Home</a>
+            <h2>Settings</h2>
+            <p>Customize your experience and manage your account.</p>
+        </div>
+
+        <div class="settings-grid">
+            <div class="settings-card">
+                <div class="settings-card-icon">🎨</div>
+                <h3>Dark Mode</h3>
+                <p>Switch between dark and light theme for comfortable viewing.</p>
+                <div class="theme-toggle-row">
+                    <span class="theme-label">Light</span>
+                    <label class="switch">
+                        <input id="theme-switch" type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="theme-label">Dark</span>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-icon">👤</div>
+                <h3>My Profile</h3>
+                <p>View and manage your account details.</p>
+                <div class="profile-info">
+                    <div class="profile-avatar" id="profile-avatar">U</div>
+                    <div class="profile-details">
+                        <span class="profile-name" id="profile-name">User</span>
+                        <span class="profile-email" id="profile-email">user@email.com</span>
+                    </div>
+                </div>
+                <button id="edit-profile-btn" class="ghost-btn full" type="button">Edit Profile</button>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-icon">🔔</div>
+                <h3>Notifications</h3>
+                <p>Manage your notification preferences.</p>
+                <div class="setting-option">
+                    <span>Email notifications</span>
+                    <label class="switch small">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-option">
+                    <span>New releases alerts</span>
+                    <label class="switch small">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-icon">🔐</div>
+                <h3>Privacy & Security</h3>
+                <p>Manage your privacy settings.</p>
+                <div class="setting-option">
+                    <span>Save watch history</span>
+                    <label class="switch small">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-option">
+                    <span>Share activity</span>
+                    <label class="switch small">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-icon">🌐</div>
+                <h3>Language & Region</h3>
+                <p>Set your preferred language and region.</p>
+                <label class="settings-select-label">
+                    Language
+                    <select id="language-setting">
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-card-icon">💡</div>
+                <h3>Quick Tips</h3>
+                <ul>
+                    <li>Use filters to narrow your results.</li>
+                    <li>Click a card for details and cast.</li>
+                    <li>Play trailers directly from cards.</li>
+                    <li>Toggle dark mode for night viewing.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="settings-actions">
+            <button id="save-settings-btn" class="solid-btn">Save Changes</button>
+            <button id="reset-settings-btn" class="ghost-btn">Reset to Default</button>
+        </div>
+    </main>
+
+    <script>
+        // Theme handling for settings page
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeSwitch = document.getElementById('theme-switch');
+
+        function setTheme(mode) {
+            document.body.dataset.theme = mode;
+            localStorage.setItem('theme', mode);
+            if (themeSwitch) {
+                themeSwitch.checked = mode === 'dark';
+            }
+        }
+
+        function toggleTheme() {
+            const current = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+
+        // Load stored theme
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) {
+            setTheme(storedTheme);
+        } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        // Load user info if available
+        const storedUser = localStorage.getItem('userName');
+        const storedEmail = localStorage.getItem('userEmail');
+        if (storedUser) {
+            document.getElementById('profile-name').textContent = storedUser;
+            document.getElementById('profile-avatar').textContent = storedUser.charAt(0).toUpperCase();
+        }
+        if (storedEmail) {
+            document.getElementById('profile-email').textContent = storedEmail;
+        }
+
+        // Check if guest
+        const isGuest = localStorage.getItem('isGuest') === 'true';
+        if (isGuest) {
+            document.getElementById('profile-name').textContent = 'Guest User';
+            document.getElementById('profile-email').textContent = 'Not signed in';
+            document.getElementById('profile-avatar').textContent = 'G';
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        if (themeSwitch) {
+            themeSwitch.addEventListener('change', () => {
+                setTheme(themeSwitch.checked ? 'dark' : 'light');
+            });
+        }
+
+        // Logout
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.setItem('auth', 'false');
+                localStorage.removeItem('isGuest');
+                window.location.href = 'index.html';
+            });
+        }
+
+        // Save settings toast
+        const saveBtn = document.getElementById('save-settings-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                alert('Settings saved successfully!');
+            });
+        }
+
+        // Reset settings
+        const resetBtn = document.getElementById('reset-settings-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (confirm('Reset all settings to default?')) {
+                    localStorage.removeItem('theme');
+                    setTheme('dark');
+                    alert('Settings reset to default.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

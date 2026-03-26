@@ -3,106 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discover and explore your loved movies with Lovescape!">
-    <title>Team = (Ritu , Rohan jha , Rohan singh , Suruchi)</title>
+    <meta name="description" content="Discover, track, and stream-trailer your favorite movies with a modern, responsive experience.">
+    <title>MidnightFlix | Smart Movie Discovery</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- Header Section -->
-    <header id="site-header">
-        <h1>MidnightFlix</h1>
-        
-        <p>Your ultimate movie discovery platform</p>
+<body data-theme="dark">
+    <div class="page-bg"></div>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark">MF</div>
+            <div>
+                <h1>MidnightFlix</h1>
+                <p>Smart movie discovery, tailored for you</p>
+            </div>
+        </div>
+        <nav class="topbar-nav">
+            <a href="#features">Features</a>
+            <a href="#app">Explore</a>
+            <a href="settings.html">Settings</a>
+        </nav>
+        <div class="topbar-actions">
+            <button id="theme-toggle" class="ghost-btn" type="button">
+                <span class="icon-sun">☀️</span>
+                <span class="icon-moon">🌙</span>
+            </button>
+            <button id="logout-btn" class="solid-btn" type="button">Log out</button>
+        </div>
     </header>
 
-    <div class="container">
-        <!-- Search Section -->
-        <div id="movie-search">
-            <input type="text" id="movie-input" placeholder="Search your favorite movie...">
-            <button id="search-btn">Search</button>
-        </div>
-
-        <!-- Filters Section -->
-        <div id="filters">
-            <label for="genre-filter">Genre:</label>
-            <select id="genre-filter">
-                <option value="">Select Genre</option>
-            </select>
-            
-            <label for="year-filter">Year:</label>
-            <select id="year-filter">
-                <option value="">Select Year</option>
-                <option value="25">2025</option>
-                <option value="24">2024</option>
-                <option value="23">2023</option>
-                <option value="22">2022</option>
-                <option value="21">2021</option>
-                <option value="20">2020</option>
-                <option value="19">2019</option>
-                <option value="18">2018</option>
-                <option value="17">2017</option>
-                <option value="16">2016</option>
-                <option value="15">2015</option>
-                <option value="14">2014</option>
-                <option value="13">2013</option>
-                <option value="12">2012</option>
-                <option value="11">2011</option>
-                <option value="10">2010</option>
-            </select>
-
-            
-            
-            <label for="rating-filter">Rating:</label>
-            <select id="rating-filter">
-                <option value="">Select Rating</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-                <option value="5">5+</option>
-                <option value="6">6+</option>
-                <option value="7">7+</option>
-                <option value="8">8+</option>
-                <option value="9">9+</option>
-            </select>
-            
-            <label for="language-filter">Language:</label>
-            <select id="language-filter">
-                <option value="">Select Language</option>
-                <option value="hi">Hindi</option>
-                <option value="en">English</option>
-            
-            </select>
-        </div>
-
-        <div id="recommendations"></div>
-        <div id="loading-spinner">Loading...</div>
-
-        <!-- Pagination Buttons -->
-        <div id="pagination-controls">
-            <button id="prev-btn">Previous</button>
-            <button id="next-btn">Next</button>
-        </div>
-
-        <!-- Movie Details Modal -->
-        <div id="movie-details-modal">
-            <div id="movie-details-content"></div>
-        </div>
-
-        <!-- Trailer Modal -->
-        <div id="trailer-modal" class="modal">
-            <div class="modal-content">
-                <span onclick="closeTrailer()" class="close-btn">&times;</span>
-                <div id="movie-trailer"></div>
+    <main>
+        <section class="hero" id="features">
+            <div class="hero-content">
+                <span class="pill">New • Dynamic UI • Super Responsive</span>
+                <h2>Discover movies with a cinematic, modern experience.</h2>
+                <p>Search, filter, and explore trending picks with blazing-fast cards, trailers, and clean details. Built for mobile and desktop.</p>
+                <div class="hero-stats">
+                    <div>
+                        <strong>50K+</strong>
+                        <span>Curated titles</span>
+                    </div>
+                    <div>
+                        <strong>200+</strong>
+                        <span>Genres tracked</span>
+                    </div>
+                    <div>
+                        <strong>24/7</strong>
+                        <span>Trending updates</span>
+                    </div>
+                </div>
             </div>
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <button class="tab-btn is-active" type="button" data-auth-tab="login">Login</button>
+                    <button class="tab-btn" type="button" data-auth-tab="signup">Sign Up</button>
+                </div>
+
+                <div class="auth-panel" data-auth-panel="login">
+                    <h3>Welcome back</h3>
+                    <p>Access your personalized movie hub.</p>
+                    <form id="login-form">
+                        <label>
+                            Email
+                            <input type="email" required placeholder="you@email.com">
+                        </label>
+                        <label>
+                            Password
+                            <input type="password" required placeholder="••••••••">
+                        </label>
+                        <button class="solid-btn full" type="submit">Login</button>
+                    </form>
+                    <div class="divider"><span>or</span></div>
+                    <button class="google-btn" type="button">Sign in with Google</button>
+                    <button id="guest-login-btn" class="guest-btn" type="button">Continue as Guest</button>
+                </div>
+
+                <div class="auth-panel is-hidden" data-auth-panel="signup">
+                    <h3>Create account</h3>
+                    <p>Join MidnightFlix and save favorites.</p>
+                    <form id="signup-form">
+                        <label>
+                            Full name
+                            <input type="text" required placeholder="Your name">
+                        </label>
+                        <label>
+                            Email
+                            <input type="email" required placeholder="you@email.com">
+                        </label>
+                        <label>
+                            Password
+                            <input type="password" required placeholder="Create a password">
+                        </label>
+                        <button class="solid-btn full" type="submit">Create account</button>
+                    </form>
+                    <div class="divider"><span>or</span></div>
+                    <button class="google-btn" type="button">Sign up with Google</button>
+                    <button id="guest-signup-btn" class="guest-btn" type="button">Continue as Guest</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="app-section" id="app">
+            <div class="section-header">
+                <div>
+                    <h2>Explore Movies</h2>
+                    <p>Search the library, filter by genre, year, rating, and language.</p>
+                </div>
+                <div class="status-chip">Live results</div>
+            </div>
+
+            <div id="movie-search" class="search-bar">
+                <input type="text" id="movie-input" placeholder="Search your favorite movie...">
+                <button id="search-btn" class="solid-btn">Search</button>
+            </div>
+
+            <div id="filters" class="filters-grid">
+                <label>
+                    Genre
+                    <select id="genre-filter">
+                        <option value="">Select Genre</option>
+                    </select>
+                </label>
+                <label>
+                    Year
+                    <select id="year-filter">
+                        <option value="">Select Year</option>
+                        <option value="25">2025</option>
+                        <option value="24">2024</option>
+                        <option value="23">2023</option>
+                        <option value="22">2022</option>
+                        <option value="21">2021</option>
+                        <option value="20">2020</option>
+                        <option value="19">2019</option>
+                        <option value="18">2018</option>
+                        <option value="17">2017</option>
+                        <option value="16">2016</option>
+                        <option value="15">2015</option>
+                        <option value="14">2014</option>
+                        <option value="13">2013</option>
+                        <option value="12">2012</option>
+                        <option value="11">2011</option>
+                        <option value="10">2010</option>
+                    </select>
+                </label>
+                <label>
+                    Rating
+                    <select id="rating-filter">
+                        <option value="">Select Rating</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                        <option value="5">5+</option>
+                        <option value="6">6+</option>
+                        <option value="7">7+</option>
+                        <option value="8">8+</option>
+                        <option value="9">9+</option>
+                    </select>
+                </label>
+                <label>
+                    Language
+                    <select id="language-filter">
+                        <option value="">Select Language</option>
+                        <option value="hi">Hindi</option>
+                        <option value="en">English</option>
+                    </select>
+                </label>
+            </div>
+
+            <div id="recommendations"></div>
+            <div id="loading-spinner">Loading...</div>
+
+            <div id="pagination-controls" class="pagination">
+                <button id="prev-btn" class="ghost-btn" type="button">Previous</button>
+                <button id="next-btn" class="ghost-btn" type="button">Next</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="movie-details-modal">
+        <div id="movie-details-content"></div>
+    </div>
+
+    <div id="trailer-modal" class="modal">
+        <div class="modal-content">
+            <span onclick="closeTrailer()" class="close-btn">&times;</span>
+            <div id="movie-trailer"></div>
         </div>
     </div>
 
-    
-    <script src="script.js">
-        function applyFilters(){
-            alert("Filters applied succesfully");
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
