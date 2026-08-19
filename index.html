@@ -10,7 +10,7 @@
 </head>
 <body class="dark-mode">
     <nav class="top-nav">
-        <div class="logo"><span class="logo-accent">Midnight</span>Flix</div>
+        <div class="logo" onclick="window.location.reload()" style="cursor: pointer;" title="Refresh Page"><span class="logo-accent">Midnight</span>Flix</div>
         <button id="settings-btn" class="icon-btn" aria-label="Open settings">
             <span class="material-symbols-outlined">tune</span>
         </button>
@@ -42,7 +42,20 @@
             <p>Search, filter, and settle in — trailers and cast are one click away.</p>
         </div>
 
-        <div class="search-filter-bar">
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-target="browse-view">
+                <span class="material-symbols-outlined">grid_view</span> Browse
+            </button>
+            <button class="tab-btn" data-target="mood-view">
+                <span class="material-symbols-outlined">mood</span> Mood Engine
+            </button>
+            <button class="tab-btn" data-target="quiz-view">
+                <span class="material-symbols-outlined">magic_button</span> Match Quiz
+            </button>
+        </div>
+
+        <div id="browse-view" class="tab-content active">
+            <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
@@ -53,24 +66,93 @@
                 </svg>
             </div>
             <div class="filters">
-                <select id="genre-filter" aria-label="Filter by genre"><option value="">All genres</option></select>
-                <select id="year-filter" aria-label="Filter by year"><option value="">Any year</option></select>
-                <select id="rating-filter" aria-label="Filter by rating">
-                  <option value="">Any rating</option>
-                  <option value="5">5+ ★</option>
-                  <option value="6">6+ ★</option>
-                  <option value="7">7+ ★</option>
-                  <option value="8">8+ ★</option>
-                  <option value="9">9+ ★</option>
-                </select>
-                <select id="lang-filter" aria-label="Filter by language">
-                  <option value="">Any language</option>
-                  <option value="en">English</option>
-                  <option value="hi">Hindi</option>
-                </select>
+                <div class="custom-select-wrapper" id="genre-filter" data-key="genre">
+                  <div class="custom-select-trigger" data-value="">All genres</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">All genres</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="year-filter" data-key="year">
+                  <div class="custom-select-trigger" data-value="">Any year</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any year</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="rating-filter" data-key="rating">
+                  <div class="custom-select-trigger" data-value="">Any rating</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any rating</div>
+                    <div class="custom-option" data-value="5">5+ ★</div>
+                    <div class="custom-option" data-value="6">6+ ★</div>
+                    <div class="custom-option" data-value="7">7+ ★</div>
+                    <div class="custom-option" data-value="8">8+ ★</div>
+                    <div class="custom-option" data-value="9">9+ ★</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="lang-filter" data-key="language">
+                  <div class="custom-select-trigger" data-value="">Any language</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any language</div>
+                    <div class="custom-option" data-value="en">English</div>
+                    <div class="custom-option" data-value="hi">Hindi</div>
+                  </div>
+                </div>
+            </div>
+        </div>
+        </div> <!-- Close browse-view tab -->
+
+        <div id="mood-view" class="tab-content hidden">
+            <div class="mood-grid">
+                <button class="mood-card" data-mood="mind-bending">
+                    <span class="mood-icon">🧠</span>
+                    <span class="mood-title">Mind-Bending</span>
+                    <span class="mood-desc">Sci-Fi, Mystery & Thrillers</span>
+                </button>
+                <button class="mood-card" data-mood="adrenaline">
+                    <span class="mood-icon">⚡</span>
+                    <span class="mood-title">Adrenaline Rush</span>
+                    <span class="mood-desc">Action & Adventure</span>
+                </button>
+                <button class="mood-card" data-mood="feel-good">
+                    <span class="mood-icon">😊</span>
+                    <span class="mood-title">Feel-Good</span>
+                    <span class="mood-desc">Comedy & Romance</span>
+                </button>
+                <button class="mood-card" data-mood="dark-gritty">
+                    <span class="mood-icon">🖤</span>
+                    <span class="mood-title">Dark & Gritty</span>
+                    <span class="mood-desc">Horror & Crime</span>
+                </button>
+                <button class="mood-card" data-mood="classic-hits">
+                    <span class="mood-icon">🍿</span>
+                    <span class="mood-title">Classic Hits</span>
+                    <span class="mood-desc">High Rated Retro</span>
+                </button>
             </div>
         </div>
 
+        <div id="quiz-view" class="tab-content hidden">
+            <div class="quiz-container">
+                <h2 style="font-family: 'Fraunces', serif; margin-bottom: 8px;">Build your perfect playlist</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 15px;">Pick up to 3 movies you love, and we'll find the perfect match.</p>
+                
+                <div class="quiz-search-box">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="quiz-search-input" placeholder="Search a movie you like..." autocomplete="off">
+                    <div id="quiz-search-results" class="quiz-dropdown hidden"></div>
+                </div>
+                
+                <div id="quiz-selected-movies" class="selected-tags"></div>
+                
+                <div style="text-align: center; margin-top: 24px;">
+                    <button id="generate-quiz-btn" class="btn primary" disabled>
+                        <span class="material-symbols-outlined" style="font-size:18px;">auto_awesome</span> Generate Recommendations
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <h3 id="results-title" class="results-title hidden"></h3>
         <div id="movie-grid" class="movie-grid" aria-live="polite">
             <!-- Movie cards / skeletons injected here -->
         </div>

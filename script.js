@@ -12,6 +12,7 @@ const TMDB_API_KEY = 'b608fa72f7a0480576a94d846193263d';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMG_POSTER = 'https://image.tmdb.org/t/p/w500';
 const IMG_PROFILE = 'https://image.tmdb.org/t/p/w185';
+const IMG_PROVIDER = 'https://image.tmdb.org/t/p/w92';
 const YOUTUBE_EMBED = 'https://www.youtube.com/embed/';
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,8 @@ const state = {
   page: 1,
   totalPages: 1,
   genreMap: {}, // id -> name
+  currentMode: 'browse', // browse | mood | quiz
+  quizSelectedMovies: [],
 };
 
 // ---------------------------------------------------------------------------
@@ -51,6 +54,16 @@ const el = {
   detailsBody: document.getElementById('details-body'),
   trailerModal: document.getElementById('trailer-modal'),
   trailerBody: document.getElementById('trailer-body'),
+  
+  // Rec Engine
+  tabs: document.querySelectorAll('.tab-btn'),
+  tabContents: document.querySelectorAll('.tab-content'),
+  resultsTitle: document.getElementById('results-title'),
+  moodCards: document.querySelectorAll('.mood-card'),
+  quizInput: document.getElementById('quiz-search-input'),
+  quizDropdown: document.getElementById('quiz-search-results'),
+  quizTags: document.getElementById('quiz-selected-movies'),
+  quizBtn: document.getElementById('generate-quiz-btn'),
 };
 
 // ---------------------------------------------------------------------------
@@ -119,12 +132,14 @@ async function tmdbFetch(path, params = {}) {
 async function loadGenres() {
   try {
     const data = await tmdbFetch('/genre/movie/list');
+    const optionsContainer = el.genreFilter.querySelector('.custom-options');
     data.genres.forEach((g) => {
       state.genreMap[g.id] = g.name;
-      const opt = document.createElement('option');
-      opt.value = g.id;
+      const opt = document.createElement('div');
+      opt.className = 'custom-option';
+      opt.setAttribute('data-value', g.id);
       opt.textContent = g.name;
-      el.genreFilter.appendChild(opt);
+      optionsContainer.appendChild(opt);
     });
   } catch (err) {
     console.error('Could not load genres:', err);
@@ -133,11 +148,13 @@ async function loadGenres() {
 
 function loadYears() {
   const current = new Date().getFullYear();
+  const optionsContainer = el.yearFilter.querySelector('.custom-options');
   for (let y = current; y >= 2000; y--) {
-    const opt = document.createElement('option');
-    opt.value = y;
+    const opt = document.createElement('div');
+    opt.className = 'custom-option';
+    opt.setAttribute('data-value', y);
     opt.textContent = y;
-    el.yearFilter.appendChild(opt);
+    optionsContainer.appendChild(opt);
   }
 }
 
@@ -269,7 +286,7 @@ async function openDetails(id) {
   document.body.style.overflow = 'hidden';
 
   try {
-    const movie = await tmdbFetch(`/movie/${id}`, { append_to_response: 'credits,videos' });
+    const movie = await tmdbFetch(`/movie/${id}`, { append_to_response: 'credits,videos,watch/providers,recommendations' });
     const poster = movie.poster_path ? IMG_POSTER + movie.poster_path : '';
     const year = (movie.release_date || '').slice(0, 4) || '—';
     const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '—';
@@ -284,8 +301,68 @@ async function openDetails(id) {
     const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
       || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
 
+    // Parse Watch Providers
+    const providersData = movie['watch/providers']?.results;
+    let regionData = null;
+    if (providersData) {
+      const preferredRegion = state.language === 'hi' ? 'IN' : 'US';
+      regionData = providersData[preferredRegion] || providersData.IN || providersData.US || Object.values(providersData)[0];
+    }
+
+    const flatrate = regionData?.flatrate || [];
+    let watchProvidersHTML = '';
+    
+    if (flatrate.length > 0) {
+      const providerItems = flatrate.map((p) => `
+        <a class="provider-item" href="${regionData.link}" target="_blank" rel="noopener" title="Stream on ${p.provider_name}">
+          <img class="provider-logo" src="${IMG_PROVIDER + p.logo_path}" alt="${p.provider_name}">
+          <span>${p.provider_name}</span>
+        </a>
+      `).join('');
+      
+      watchProvidersHTML = `
+        <div class="details-providers">
+          <div class="section-label">Where to watch</div>
+          <div class="providers-list">${providerItems}</div>
+        </div>
+      `;
+    } else if (regionData?.link) {
+      watchProvidersHTML = `
+        <div class="details-providers">
+          <div class="section-label">Where to watch</div>
+          <div class="providers-list">
+            <a class="provider-item" href="${regionData.link}" target="_blank" rel="noopener" style="padding-left: 12px;">
+              <span class="material-symbols-outlined" style="font-size:16px;">info</span>
+              <span>Watch options available</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Parse Recommendations
+    const recs = (movie.recommendations?.results || []).slice(0, 10);
+    let recsHTML = '';
+    if (recs.length > 0) {
+      const recCards = recs.map(r => `
+        <a class="rec-card" onclick="openDetails('${r.id}')">
+          <img src="${r.poster_path ? IMG_POSTER + r.poster_path : 'https://placehold.co/130x195/14151d/8d90a3?text=?'}" alt="${r.title.replace(/"/g, '&quot;')}">
+          <span class="rec-title">${r.title}</span>
+        </a>
+      `).join('');
+      
+      recsHTML = `
+        <div class="modal-recommendations">
+          <h3>More Like This</h3>
+          <div class="recommendations-scroll">
+            ${recCards}
+          </div>
+        </div>
+      `;
+    }
+
     el.detailsBody.innerHTML = `
-      ${poster ? `<img class="details-poster" src="${poster}" alt="${movie.title} poster">` : ''}
+      ${poster ? `<img class="details-poster" src="${poster}" alt="${movie.title.replace(/"/g, '&quot;')} poster">` : ''}
       <div class="details-info">
         <div class="details-title">${movie.title}</div>
         <div class="details-meta">
@@ -303,6 +380,7 @@ async function openDetails(id) {
           <div class="section-label">Top cast</div>
           <div class="details-cast">${cast}</div>
         </div>` : ''}
+        ${watchProvidersHTML}
         <div class="details-actions">
           <button class="btn primary" id="watch-trailer-btn" ${trailer ? '' : 'disabled'}>
             <span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span> Watch trailer
@@ -311,6 +389,7 @@ async function openDetails(id) {
             <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span> Watch movie
           </a>
         </div>
+        ${recsHTML}
       </div>`;
 
     document.getElementById('watch-trailer-btn')?.addEventListener('click', () => {
@@ -359,14 +438,38 @@ el.searchInput.addEventListener('input', (e) => {
   debouncedSearch();
 });
 
-[el.genreFilter, el.yearFilter, el.ratingFilter, el.langFilter].forEach((select) => {
-  select.addEventListener('change', () => {
-    state.genre = el.genreFilter.value;
-    state.year = el.yearFilter.value;
-    state.rating = el.ratingFilter.value;
-    state.language = el.langFilter.value;
-    state.page = 1;
-    fetchMovies();
+// Custom Dropdown Logic
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select-wrapper')) {
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+  }
+});
+
+[el.genreFilter, el.yearFilter, el.ratingFilter, el.langFilter].forEach((wrapper) => {
+  if (!wrapper) return;
+  const trigger = wrapper.querySelector('.custom-select-trigger');
+  
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = wrapper.classList.contains('open');
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+    if (!isOpen) wrapper.classList.add('open');
+  });
+
+  wrapper.addEventListener('click', (e) => {
+    const option = e.target.closest('.custom-option');
+    if (option) {
+      wrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+      trigger.textContent = option.textContent;
+      trigger.setAttribute('data-value', option.getAttribute('data-value'));
+      wrapper.classList.remove('open');
+      
+      const key = wrapper.getAttribute('data-key');
+      if (key) state[key] = option.getAttribute('data-value');
+      state.page = 1;
+      fetchMovies();
+    }
   });
 });
 
@@ -402,6 +505,207 @@ document.querySelectorAll('.close-modal').forEach((btn) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeDetails(); closeTrailer(); closeDrawer(); }
 });
+
+// ---------------------------------------------------------------------------
+// Rec Engine: Tabs
+// ---------------------------------------------------------------------------
+el.tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    // UI Update
+    el.tabs.forEach(t => t.classList.remove('active'));
+    el.tabContents.forEach(c => c.classList.remove('active', 'hidden'));
+    tab.classList.add('active');
+    
+    const target = tab.getAttribute('data-target');
+    el.tabContents.forEach(c => {
+      if (c.id === target) {
+        c.classList.add('active');
+      } else {
+        c.classList.add('hidden');
+      }
+    });
+
+    state.currentMode = target.split('-')[0];
+    
+    // Logic update
+    el.resultsTitle.classList.add('hidden');
+    if (state.currentMode === 'browse') {
+      fetchMovies();
+    } else if (state.currentMode === 'mood') {
+      el.grid.innerHTML = '';
+      updatePagination(true);
+    } else if (state.currentMode === 'quiz') {
+      el.grid.innerHTML = '';
+      updatePagination(true);
+      if (state.quizSelectedMovies.length > 0) {
+        el.quizBtn.disabled = false;
+      }
+    }
+  });
+});
+
+// Helper for Recs pagination hiding
+function updatePagination(forceHide = false) {
+  if (forceHide) {
+    el.prevBtn.classList.add('hidden');
+    el.nextBtn.classList.add('hidden');
+    el.pageIndicator.textContent = '';
+    return;
+  }
+  el.prevBtn.classList.toggle('hidden', state.page <= 1);
+  el.nextBtn.classList.toggle('hidden', state.page >= state.totalPages);
+  el.pageIndicator.textContent = state.totalPages > 1 ? `Page ${state.page} of ${Math.min(state.totalPages, 500)}` : '';
+}
+
+// ---------------------------------------------------------------------------
+// Rec Engine: Moods
+// ---------------------------------------------------------------------------
+const moodConfigs = {
+  'mind-bending': { genres: '878,9648,53', sort: 'popularity.desc' }, // Sci-Fi, Mystery, Thriller
+  'adrenaline': { genres: '28,12', sort: 'popularity.desc' }, // Action, Adventure
+  'feel-good': { genres: '35,10749', sort: 'popularity.desc' }, // Comedy, Romance
+  'dark-gritty': { genres: '27,80', sort: 'popularity.desc' }, // Horror, Crime
+  'classic-hits': { genres: '', sort: 'vote_average.desc', 'vote_count.gte': 5000 } 
+};
+
+el.moodCards.forEach(card => {
+  card.addEventListener('click', async () => {
+    const mood = card.getAttribute('data-mood');
+    const config = moodConfigs[mood];
+    const title = card.querySelector('.mood-title').textContent;
+    
+    el.resultsTitle.textContent = `Recommended for: ${title}`;
+    el.resultsTitle.classList.remove('hidden');
+    
+    renderSkeletons();
+    
+    try {
+      const params = {
+        page: 1,
+        sort_by: config.sort,
+        with_genres: config.genres
+      };
+      if (config['vote_count.gte']) params['vote_count.gte'] = config['vote_count.gte'];
+      
+      const data = await tmdbFetch('/discover/movie', params);
+      renderMovies(data.results);
+      updatePagination(true);
+    } catch (e) {
+      console.error(e);
+      renderError();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rec Engine: Quiz
+// ---------------------------------------------------------------------------
+let quizDebounceTimer;
+if(el.quizInput) {
+  el.quizInput.addEventListener('input', (e) => {
+    clearTimeout(quizDebounceTimer);
+    const q = e.target.value.trim();
+    if (!q) {
+      el.quizDropdown.classList.add('hidden');
+      return;
+    }
+    
+    quizDebounceTimer = setTimeout(async () => {
+      try {
+        const data = await tmdbFetch('/search/movie', { query: q, page: 1 });
+        const results = data.results.slice(0, 5);
+        
+        if (results.length > 0) {
+          el.quizDropdown.innerHTML = results.map(m => `
+            <div class="quiz-dropdown-item" data-id="${m.id}" data-title="${m.title.replace(/"/g, '&quot;')}">
+              <img src="${m.poster_path ? IMG_PROFILE + m.poster_path : 'https://placehold.co/32x48/14151d/8d90a3?text=?'}" alt="poster">
+              <span>${m.title} <small style="color:var(--text-secondary)">(${m.release_date?.slice(0,4)||'N/A'})</small></span>
+            </div>
+          `).join('');
+          el.quizDropdown.classList.remove('hidden');
+        } else {
+          el.quizDropdown.classList.add('hidden');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 400);
+  });
+}
+
+if(el.quizDropdown) {
+  el.quizDropdown.addEventListener('click', (e) => {
+    const item = e.target.closest('.quiz-dropdown-item');
+    if (item) {
+      const id = item.getAttribute('data-id');
+      const title = item.getAttribute('data-title');
+      
+      if (state.quizSelectedMovies.length < 3 && !state.quizSelectedMovies.find(m => m.id === id)) {
+        state.quizSelectedMovies.push({ id, title });
+        renderQuizTags();
+      }
+      
+      el.quizInput.value = '';
+      el.quizDropdown.classList.add('hidden');
+    }
+  });
+}
+
+function renderQuizTags() {
+  el.quizTags.innerHTML = state.quizSelectedMovies.map(m => `
+    <div class="selected-tag">
+      ${m.title}
+      <button onclick="removeQuizMovie('${m.id}')"><span class="material-symbols-outlined" style="font-size:16px;">close</span></button>
+    </div>
+  `).join('');
+  el.quizBtn.disabled = state.quizSelectedMovies.length === 0;
+}
+
+window.removeQuizMovie = function(id) {
+  state.quizSelectedMovies = state.quizSelectedMovies.filter(m => m.id !== id);
+  renderQuizTags();
+};
+
+if(el.quizBtn) {
+  el.quizBtn.addEventListener('click', async () => {
+    if (state.quizSelectedMovies.length === 0) return;
+    
+    el.resultsTitle.textContent = `Curated for you`;
+    el.resultsTitle.classList.remove('hidden');
+    renderSkeletons();
+    
+    try {
+      const promises = state.quizSelectedMovies.map(m => tmdbFetch(`/movie/${m.id}/recommendations`));
+      const responses = await Promise.all(promises);
+      
+      const merged = {};
+      const selectedIds = new Set(state.quizSelectedMovies.map(m => Number(m.id)));
+      
+      responses.forEach(res => {
+        res.results.forEach(m => {
+          if (!selectedIds.has(m.id)) {
+            if (!merged[m.id]) {
+              merged[m.id] = { ...m, count: 1 };
+            } else {
+              merged[m.id].count++;
+            }
+          }
+        });
+      });
+      
+      const finalRecs = Object.values(merged).sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return b.popularity - a.popularity;
+      }).slice(0, 20);
+      
+      renderMovies(finalRecs);
+      updatePagination(true);
+    } catch (err) {
+      console.error(err);
+      renderError();
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Init
