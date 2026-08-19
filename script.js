@@ -12,6 +12,7 @@ const TMDB_API_KEY = 'b608fa72f7a0480576a94d846193263d';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const IMG_POSTER = 'https://image.tmdb.org/t/p/w500';
 const IMG_PROFILE = 'https://image.tmdb.org/t/p/w185';
+const IMG_PROVIDER = 'https://image.tmdb.org/t/p/w92';
 const YOUTUBE_EMBED = 'https://www.youtube.com/embed/';
 
 // ---------------------------------------------------------------------------
@@ -269,7 +270,7 @@ async function openDetails(id) {
   document.body.style.overflow = 'hidden';
 
   try {
-    const movie = await tmdbFetch(`/movie/${id}`, { append_to_response: 'credits,videos' });
+    const movie = await tmdbFetch(`/movie/${id}`, { append_to_response: 'credits,videos,watch/providers' });
     const poster = movie.poster_path ? IMG_POSTER + movie.poster_path : '';
     const year = (movie.release_date || '').slice(0, 4) || '—';
     const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '—';
@@ -283,6 +284,45 @@ async function openDetails(id) {
 
     const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
       || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
+
+    // Parse Watch Providers
+    const providersData = movie['watch/providers']?.results;
+    let regionData = null;
+    if (providersData) {
+      const preferredRegion = state.language === 'hi' ? 'IN' : 'US';
+      regionData = providersData[preferredRegion] || providersData.IN || providersData.US || Object.values(providersData)[0];
+    }
+
+    const flatrate = regionData?.flatrate || [];
+    let watchProvidersHTML = '';
+    
+    if (flatrate.length > 0) {
+      const providerItems = flatrate.map((p) => `
+        <a class="provider-item" href="${regionData.link}" target="_blank" rel="noopener" title="Stream on ${p.provider_name}">
+          <img class="provider-logo" src="${IMG_PROVIDER + p.logo_path}" alt="${p.provider_name}">
+          <span>${p.provider_name}</span>
+        </a>
+      `).join('');
+      
+      watchProvidersHTML = `
+        <div class="details-providers">
+          <div class="section-label">Where to watch</div>
+          <div class="providers-list">${providerItems}</div>
+        </div>
+      `;
+    } else if (regionData?.link) {
+      watchProvidersHTML = `
+        <div class="details-providers">
+          <div class="section-label">Where to watch</div>
+          <div class="providers-list">
+            <a class="provider-item" href="${regionData.link}" target="_blank" rel="noopener" style="padding-left: 12px;">
+              <span class="material-symbols-outlined" style="font-size:16px;">info</span>
+              <span>Watch options available</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }
 
     el.detailsBody.innerHTML = `
       ${poster ? `<img class="details-poster" src="${poster}" alt="${movie.title} poster">` : ''}
@@ -303,6 +343,7 @@ async function openDetails(id) {
           <div class="section-label">Top cast</div>
           <div class="details-cast">${cast}</div>
         </div>` : ''}
+        ${watchProvidersHTML}
         <div class="details-actions">
           <button class="btn primary" id="watch-trailer-btn" ${trailer ? '' : 'disabled'}>
             <span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span> Watch trailer
