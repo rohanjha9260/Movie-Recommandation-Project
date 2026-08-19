@@ -1,193 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discover, track, and stream-trailer your favorite movies with a modern, responsive experience.">
     <title>MidnightFlix | Smart Movie Discovery</title>
+    <meta name="description" content="Discover movies by mood, genre, year, rating and language — with trailers, cast and details, all in one late-night lobby.">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,300..500,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body data-theme="dark">
-    <div class="page-bg"></div>
-    <header class="topbar">
-        <div class="brand">
-            <div class="brand-mark">MF</div>
-            <div>
-                <h1>MidnightFlix</h1>
-                <p>Smart movie discovery, tailored for you</p>
+<body class="dark-mode">
+    <nav class="top-nav">
+        <div class="logo"><span class="logo-accent">Midnight</span>Flix</div>
+        <button id="settings-btn" class="icon-btn" aria-label="Open settings">
+            <span class="material-symbols-outlined">tune</span>
+        </button>
+    </nav>
+
+    <aside id="settings-panel" class="settings-drawer" aria-label="Settings">
+        <div class="drawer-header">
+            <h2>Settings</h2>
+            <button id="close-settings" class="icon-btn" aria-label="Close settings"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="drawer-content">
+            <div class="setting-item">
+                <span>
+                    Dark mode
+                    <span class="setting-hint">Best for late-night browsing</span>
+                </span>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
             </div>
         </div>
-        <nav class="topbar-nav">
-            <a href="#features">Features</a>
-            <a href="#app">Explore</a>
-            <a href="settings.html">Settings</a>
-        </nav>
-        <div class="topbar-actions">
-            <button id="theme-toggle" class="ghost-btn" type="button">
-                <span class="icon-sun">☀️</span>
-                <span class="icon-moon">🌙</span>
+    </aside>
+    <div id="drawer-overlay" class="overlay"></div>
+
+    <main class="container">
+        <div class="page-heading">
+            <h1>What's screening tonight?</h1>
+            <p>Search, filter, and settle in — trailers and cast are one click away.</p>
+        </div>
+
+        <div class="search-filter-bar">
+            <div class="search-box">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
+                <svg class="search-spinner" id="search-spinner" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="42" stroke-dashoffset="10">
+                        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+            </div>
+            <div class="filters">
+                <select id="genre-filter" aria-label="Filter by genre"><option value="">All genres</option></select>
+                <select id="year-filter" aria-label="Filter by year"><option value="">Any year</option></select>
+                <select id="rating-filter" aria-label="Filter by rating">
+                  <option value="">Any rating</option>
+                  <option value="5">5+ ★</option>
+                  <option value="6">6+ ★</option>
+                  <option value="7">7+ ★</option>
+                  <option value="8">8+ ★</option>
+                  <option value="9">9+ ★</option>
+                </select>
+                <select id="lang-filter" aria-label="Filter by language">
+                  <option value="">Any language</option>
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="movie-grid" class="movie-grid" aria-live="polite">
+            <!-- Movie cards / skeletons injected here -->
+        </div>
+
+        <div class="pagination">
+            <button id="prev-btn" class="btn hidden">
+                <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Previous
             </button>
-            <button id="logout-btn" class="solid-btn" type="button">Log out</button>
+            <span id="page-indicator" class="page-indicator"></span>
+            <button id="next-btn" class="btn primary hidden">
+                Next <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+            </button>
         </div>
-    </header>
-
-    <main>
-        <section class="hero" id="features">
-            <div class="hero-content">
-                <span class="pill">New • Dynamic UI • Super Responsive</span>
-                <h2>Discover movies with a cinematic, modern experience.</h2>
-                <p>Search, filter, and explore trending picks with blazing-fast cards, trailers, and clean details. Built for mobile and desktop.</p>
-                <div class="hero-stats">
-                    <div>
-                        <strong>50K+</strong>
-                        <span>Curated titles</span>
-                    </div>
-                    <div>
-                        <strong>200+</strong>
-                        <span>Genres tracked</span>
-                    </div>
-                    <div>
-                        <strong>24/7</strong>
-                        <span>Trending updates</span>
-                    </div>
-                </div>
-            </div>
-            <div class="auth-card">
-                <div class="auth-tabs">
-                    <button class="tab-btn is-active" type="button" data-auth-tab="login">Login</button>
-                    <button class="tab-btn" type="button" data-auth-tab="signup">Sign Up</button>
-                </div>
-
-                <div class="auth-panel" data-auth-panel="login">
-                    <h3>Welcome back</h3>
-                    <p>Access your personalized movie hub.</p>
-                    <form id="login-form">
-                        <label>
-                            Email
-                            <input type="email" required placeholder="you@email.com">
-                        </label>
-                        <label>
-                            Password
-                            <input type="password" required placeholder="••••••••">
-                        </label>
-                        <button class="solid-btn full" type="submit">Login</button>
-                    </form>
-                    <div class="divider"><span>or</span></div>
-                    <button class="google-btn" type="button">Sign in with Google</button>
-                    <button id="guest-login-btn" class="guest-btn" type="button">Continue as Guest</button>
-                </div>
-
-                <div class="auth-panel is-hidden" data-auth-panel="signup">
-                    <h3>Create account</h3>
-                    <p>Join MidnightFlix and save favorites.</p>
-                    <form id="signup-form">
-                        <label>
-                            Full name
-                            <input type="text" required placeholder="Your name">
-                        </label>
-                        <label>
-                            Email
-                            <input type="email" required placeholder="you@email.com">
-                        </label>
-                        <label>
-                            Password
-                            <input type="password" required placeholder="Create a password">
-                        </label>
-                        <button class="solid-btn full" type="submit">Create account</button>
-                    </form>
-                    <div class="divider"><span>or</span></div>
-                    <button class="google-btn" type="button">Sign up with Google</button>
-                    <button id="guest-signup-btn" class="guest-btn" type="button">Continue as Guest</button>
-                </div>
-            </div>
-        </section>
-
-        <section class="app-section" id="app">
-            <div class="section-header">
-                <div>
-                    <h2>Explore Movies</h2>
-                    <p>Search the library, filter by genre, year, rating, and language.</p>
-                </div>
-                <div class="status-chip">Live results</div>
-            </div>
-
-            <div id="movie-search" class="search-bar">
-                <input type="text" id="movie-input" placeholder="Search your favorite movie...">
-                <button id="search-btn" class="solid-btn">Search</button>
-            </div>
-
-            <div id="filters" class="filters-grid">
-                <label>
-                    Genre
-                    <select id="genre-filter">
-                        <option value="">Select Genre</option>
-                    </select>
-                </label>
-                <label>
-                    Year
-                    <select id="year-filter">
-                        <option value="">Select Year</option>
-                        <option value="25">2025</option>
-                        <option value="24">2024</option>
-                        <option value="23">2023</option>
-                        <option value="22">2022</option>
-                        <option value="21">2021</option>
-                        <option value="20">2020</option>
-                        <option value="19">2019</option>
-                        <option value="18">2018</option>
-                        <option value="17">2017</option>
-                        <option value="16">2016</option>
-                        <option value="15">2015</option>
-                        <option value="14">2014</option>
-                        <option value="13">2013</option>
-                        <option value="12">2012</option>
-                        <option value="11">2011</option>
-                        <option value="10">2010</option>
-                    </select>
-                </label>
-                <label>
-                    Rating
-                    <select id="rating-filter">
-                        <option value="">Select Rating</option>
-                        <option value="1">1+</option>
-                        <option value="2">2+</option>
-                        <option value="3">3+</option>
-                        <option value="4">4+</option>
-                        <option value="5">5+</option>
-                        <option value="6">6+</option>
-                        <option value="7">7+</option>
-                        <option value="8">8+</option>
-                        <option value="9">9+</option>
-                    </select>
-                </label>
-                <label>
-                    Language
-                    <select id="language-filter">
-                        <option value="">Select Language</option>
-                        <option value="hi">Hindi</option>
-                        <option value="en">English</option>
-                    </select>
-                </label>
-            </div>
-
-            <div id="recommendations"></div>
-            <div id="loading-spinner">Loading...</div>
-
-            <div id="pagination-controls" class="pagination">
-                <button id="prev-btn" class="ghost-btn" type="button">Previous</button>
-                <button id="next-btn" class="ghost-btn" type="button">Next</button>
-            </div>
-        </section>
     </main>
 
-    <div id="movie-details-modal">
-        <div id="movie-details-content"></div>
+    <!-- Details Modal -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+            <div id="details-body" class="details-body"></div>
+        </div>
     </div>
 
-    <div id="trailer-modal" class="modal">
-        <div class="modal-content">
-            <span onclick="closeTrailer()" class="close-btn">&times;</span>
-            <div id="movie-trailer"></div>
+    <!-- Trailer Modal -->
+    <div id="trailer-modal" class="modal-overlay">
+        <div class="trailer-content">
+            <button class="close-modal" aria-label="Close trailer"><span class="material-symbols-outlined">close</span></button>
+            <div id="trailer-body"></div>
         </div>
     </div>
 
