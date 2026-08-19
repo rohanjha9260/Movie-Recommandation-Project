@@ -42,7 +42,20 @@
             <p>Search, filter, and settle in — trailers and cast are one click away.</p>
         </div>
 
-        <div class="search-filter-bar">
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-target="browse-view">
+                <span class="material-symbols-outlined">grid_view</span> Browse
+            </button>
+            <button class="tab-btn" data-target="mood-view">
+                <span class="material-symbols-outlined">mood</span> Mood Engine
+            </button>
+            <button class="tab-btn" data-target="quiz-view">
+                <span class="material-symbols-outlined">magic_button</span> Match Quiz
+            </button>
+        </div>
+
+        <div id="browse-view" class="tab-content active">
+            <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
                 <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
@@ -70,7 +83,60 @@
                 </select>
             </div>
         </div>
+        </div> <!-- Close browse-view tab -->
 
+        <div id="mood-view" class="tab-content hidden">
+            <div class="mood-grid">
+                <button class="mood-card" data-mood="mind-bending">
+                    <span class="mood-icon">🧠</span>
+                    <span class="mood-title">Mind-Bending</span>
+                    <span class="mood-desc">Sci-Fi, Mystery & Thrillers</span>
+                </button>
+                <button class="mood-card" data-mood="adrenaline">
+                    <span class="mood-icon">⚡</span>
+                    <span class="mood-title">Adrenaline Rush</span>
+                    <span class="mood-desc">Action & Adventure</span>
+                </button>
+                <button class="mood-card" data-mood="feel-good">
+                    <span class="mood-icon">😊</span>
+                    <span class="mood-title">Feel-Good</span>
+                    <span class="mood-desc">Comedy & Romance</span>
+                </button>
+                <button class="mood-card" data-mood="dark-gritty">
+                    <span class="mood-icon">🖤</span>
+                    <span class="mood-title">Dark & Gritty</span>
+                    <span class="mood-desc">Horror & Crime</span>
+                </button>
+                <button class="mood-card" data-mood="classic-hits">
+                    <span class="mood-icon">🍿</span>
+                    <span class="mood-title">Classic Hits</span>
+                    <span class="mood-desc">High Rated Retro</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="quiz-view" class="tab-content hidden">
+            <div class="quiz-container">
+                <h2 style="font-family: 'Fraunces', serif; margin-bottom: 8px;">Build your perfect playlist</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 15px;">Pick up to 3 movies you love, and we'll find the perfect match.</p>
+                
+                <div class="quiz-search-box">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    <input type="text" id="quiz-search-input" placeholder="Search a movie you like..." autocomplete="off">
+                    <div id="quiz-search-results" class="quiz-dropdown hidden"></div>
+                </div>
+                
+                <div id="quiz-selected-movies" class="selected-tags"></div>
+                
+                <div style="text-align: center; margin-top: 24px;">
+                    <button id="generate-quiz-btn" class="btn primary" disabled>
+                        <span class="material-symbols-outlined" style="font-size:18px;">auto_awesome</span> Generate Recommendations
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <h3 id="results-title" class="results-title hidden"></h3>
         <div id="movie-grid" class="movie-grid" aria-live="polite">
             <!-- Movie cards / skeletons injected here -->
         </div>
