@@ -1,225 +1,413 @@
-const q = (sel) => document.querySelector(sel);
-const qa = (sel) => document.querySelectorAll(sel);
+/* ==========================================================================
+   MidnightFlix — App Logic
+   Powered by TMDB (https://www.themoviedb.org/documentation/api).
 
-const api = 'b608fa72f7a0480576a94d846193263d';
-const base = 'https://api.themoviedb.org/3';
-let page = 1;
-let total = 1;
-let genres = {};
+   ⚠️ Add your own free TMDB API key below before running:
+      1. Create an account at https://www.themoviedb.org
+      2. Go to Settings → API → request a free "Developer" key (v3 auth)
+      3. Paste it into TMDB_API_KEY
+   ========================================================================== */
 
-const els = {
-  theme: q('#theme-toggle'),
-  settingsBtn: q('#settings-btn'),
-  settingsDrawer: q('#settings-panel'),
-  closeSettings: q('#close-settings'),
-  overlay: q('#drawer-overlay'),
-  search: q('#search-input'),
-  genre: q('#genre-filter'),
-  year: q('#year-filter'),
-  rating: q('#rating-filter'),
-  lang: q('#lang-filter'),
-  grid: q('#movie-grid'),
-  prev: q('#prev-btn'),
-  next: q('#next-btn'),
-  details: q('#details-modal'),
-  detailsBody: q('#details-body'),
-  trailer: q('#trailer-modal'),
-  trailerBody: q('#trailer-body')
+const TMDB_API_KEY = 'b608fa72f7a0480576a94d846193263d';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const IMG_POSTER = 'https://image.tmdb.org/t/p/w500';
+const IMG_PROFILE = 'https://image.tmdb.org/t/p/w185';
+const YOUTUBE_EMBED = 'https://www.youtube.com/embed/';
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+const state = {
+  query: '',
+  genre: '',
+  year: '',
+  rating: '',
+  language: '',
+  page: 1,
+  totalPages: 1,
+  genreMap: {}, // id -> name
 };
 
-function initTheme() {
-  const isDark = localStorage.getItem('theme') === 'dark';
-  document.body.className = isDark ? 'dark-mode' : 'light-mode';
-  els.theme.checked = isDark;
+// ---------------------------------------------------------------------------
+// DOM references
+// ---------------------------------------------------------------------------
+const el = {
+  grid: document.getElementById('movie-grid'),
+  searchInput: document.getElementById('search-input'),
+  searchSpinner: document.getElementById('search-spinner'),
+  genreFilter: document.getElementById('genre-filter'),
+  yearFilter: document.getElementById('year-filter'),
+  ratingFilter: document.getElementById('rating-filter'),
+  langFilter: document.getElementById('lang-filter'),
+  prevBtn: document.getElementById('prev-btn'),
+  nextBtn: document.getElementById('next-btn'),
+  pageIndicator: document.getElementById('page-indicator'),
+  settingsBtn: document.getElementById('settings-btn'),
+  closeSettings: document.getElementById('close-settings'),
+  settingsPanel: document.getElementById('settings-panel'),
+  drawerOverlay: document.getElementById('drawer-overlay'),
+  themeToggle: document.getElementById('theme-toggle'),
+  detailsModal: document.getElementById('details-modal'),
+  detailsBody: document.getElementById('details-body'),
+  trailerModal: document.getElementById('trailer-modal'),
+  trailerBody: document.getElementById('trailer-body'),
+};
+
+// ---------------------------------------------------------------------------
+// Theme (persisted in localStorage)
+// ---------------------------------------------------------------------------
+function applyTheme(isDark) {
+  document.body.classList.toggle('light-mode', !isDark);
+  document.body.classList.toggle('dark-mode', isDark);
+  el.themeToggle.checked = isDark;
+  localStorage.setItem('midnightflix-theme', isDark ? 'dark' : 'light');
 }
 
-els.theme.onchange = (e) => {
-  const dark = e.target.checked;
-  document.body.className = dark ? 'dark-mode' : 'light-mode';
-  localStorage.setItem('theme', dark ? 'dark' : 'light');
-};
+(function initTheme() {
+  const saved = localStorage.getItem('midnightflix-theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved ? saved === 'dark' : (saved === null ? true : prefersDark));
+})();
 
-const toggleDrawer = (show) => {
-  els.settingsDrawer.classList.toggle('open', show);
-  els.overlay.classList.toggle('open', show);
-};
+el.themeToggle.addEventListener('change', (e) => applyTheme(e.target.checked));
 
-els.settingsBtn.onclick = () => toggleDrawer(true);
-els.closeSettings.onclick = () => toggleDrawer(false);
-els.overlay.onclick = () => toggleDrawer(false);
+// ---------------------------------------------------------------------------
+// Settings drawer
+// ---------------------------------------------------------------------------
+function openDrawer() {
+  el.settingsPanel.classList.add('open');
+  el.drawerOverlay.classList.add('open');
+}
+function closeDrawer() {
+  el.settingsPanel.classList.remove('open');
+  el.drawerOverlay.classList.remove('open');
+}
+el.settingsBtn.addEventListener('click', openDrawer);
+el.closeSettings.addEventListener('click', closeDrawer);
+el.drawerOverlay.addEventListener('click', closeDrawer);
 
-const closeModals = () => {
-  els.details.classList.remove('open');
-  els.trailer.classList.remove('open');
-  els.trailerBody.innerHTML = '';
-};
-
-qa('.close-modal').forEach(b => b.onclick = closeModals);
-els.details.onclick = (e) => { if(e.target === els.details) closeModals(); };
-els.trailer.onclick = (e) => { if(e.target === els.trailer) closeModals(); };
-
-async function fetchJson(url) {
-  try {
-    const res = await fetch(url);
-    return await res.json();
-  } catch(e) {
-    return null;
-  }
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
 }
 
+function starIconSVG() {
+  return '<svg viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.2-5.4 3.2 1.3-6L1.3 7.7l6.1-.6z"/></svg>';
+}
+
+async function tmdbFetch(path, params = {}) {
+  const url = new URL(TMDB_BASE + path);
+  url.searchParams.set('api_key', TMDB_API_KEY);
+  url.searchParams.set('include_adult', 'false');
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== '' && v !== undefined && v !== null) url.searchParams.set(k, v);
+  });
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`TMDB request failed (${res.status})`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Populate filters
+// ---------------------------------------------------------------------------
 async function loadGenres() {
-  const data = await fetchJson(`${base}/genre/movie/list?api_key=${api}`);
-  if (data?.genres) {
-    data.genres.forEach(g => {
-      genres[g.id] = g.name;
+  try {
+    const data = await tmdbFetch('/genre/movie/list');
+    data.genres.forEach((g) => {
+      state.genreMap[g.id] = g.name;
       const opt = document.createElement('option');
       opt.value = g.id;
       opt.textContent = g.name;
-      els.genre.appendChild(opt);
+      el.genreFilter.appendChild(opt);
     });
+  } catch (err) {
+    console.error('Could not load genres:', err);
   }
 }
 
-function renderSkeletons() {
-  els.grid.innerHTML = Array(20).fill(`
-    <div class="movie-card skeleton"></div>
-  `).join('');
-}
-
-function renderMovies(movies) {
-  if (!movies || !movies.length) {
-    els.grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">No movies found.</p>';
-    return;
-  }
-  
-  els.grid.innerHTML = movies.map(m => {
-    const img = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
-    const rating = m.vote_average ? m.vote_average.toFixed(1) : 'N/A';
-    return `
-      <div class="movie-card" onclick="openDetails(${m.id})">
-        <div class="card-img-wrap">
-          <img src="${img}" class="card-img" loading="lazy" alt="${m.title}" onload="this.style.opacity=1" style="opacity:0">
-        </div>
-        <div class="card-overlay">
-          <div class="card-title">${m.title}</div>
-          <div class="card-rating">
-            <span class="material-symbols-outlined" style="font-size:16px; font-variation-settings:'FILL' 1;">star</span>
-            ${rating}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-async function loadMovies() {
-  renderSkeletons();
-  
-  const qStr = els.search.value.trim();
-  const g = els.genre.value;
-  const y = els.year.value;
-  const r = els.rating.value;
-  const l = els.lang.value || 'en-US';
-  
-  let url = `${base}/discover/movie?api_key=${api}&language=${l}&page=${page}`;
-  
-  if (qStr) {
-    url = `${base}/search/movie?api_key=${api}&query=${encodeURIComponent(qStr)}&language=${l}&page=${page}`;
-  }
-  
-  if (g) url += `&with_genres=${g}`;
-  if (y) url += `&primary_release_year=${y}`;
-  if (r) url += `&vote_average.gte=${r}`;
-  
-  const data = await fetchJson(url);
-  if (data) {
-    total = data.total_pages;
-    renderMovies(data.results);
-    els.prev.classList.toggle('hidden', page <= 1);
-    els.next.classList.toggle('hidden', page >= total);
-  }
-}
-
-let debounceTimer;
-els.search.oninput = () => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    page = 1;
-    loadMovies();
-  }, 500);
-};
-
-[els.genre, els.year, els.rating, els.lang].forEach(el => {
-  el.onchange = () => { page = 1; loadMovies(); };
-});
-
-els.prev.onclick = () => { if(page > 1) { page--; loadMovies(); } };
-els.next.onclick = () => { if(page < total) { page++; loadMovies(); } };
-
-window.openDetails = async (id) => {
-  const data = await fetchJson(`${base}/movie/${id}?api_key=${api}&language=en-US`);
-  if (!data) return;
-  
-  const castData = await fetchJson(`${base}/movie/${id}/credits?api_key=${api}`);
-  const cast = (castData?.cast || []).slice(0, 5).map(c => `
-    <div class="cast-member">
-      <img src="${c.profile_path ? 'https://image.tmdb.org/t/p/w185'+c.profile_path : 'https://via.placeholder.com/60'}" class="cast-img">
-      <div class="cast-name">${c.name}</div>
-    </div>
-  `).join('');
-
-  const img = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : 'https://via.placeholder.com/500x750';
-  const year = data.release_date ? data.release_date.split('-')[0] : '';
-  const gList = data.genres.map(g => `<span class="badge">${g.name}</span>`).join('');
-  
-  els.detailsBody.innerHTML = `
-    <img src="${img}" class="details-poster">
-    <div class="details-info">
-      <h2 class="details-title">${data.title}</h2>
-      <div class="details-meta">
-        ${year ? `<span>${year}</span>` : ''}
-        ${data.runtime ? `<span>${Math.floor(data.runtime/60)}h ${data.runtime%60}m</span>` : ''}
-        <span style="color:#ffb347; display:flex; align-items:center; gap:2px;">
-          <span class="material-symbols-outlined" style="font-size:16px; font-variation-settings:'FILL' 1;">star</span>
-          ${data.vote_average.toFixed(1)}
-        </span>
-      </div>
-      <div class="details-meta">${gList}</div>
-      <p class="details-overview">${data.overview}</p>
-      ${cast ? `<div class="details-cast">${cast}</div>` : ''}
-      <div class="details-actions">
-        <button class="btn primary" onclick="openTrailer(${id})">Watch Trailer</button>
-        <button class="btn" onclick="window.open('https://www.vegamovies.com/movie/${id}', '_blank')">Watch Movie</button>
-      </div>
-    </div>
-  `;
-  els.details.classList.add('open');
-};
-
-window.openTrailer = async (id) => {
-  const data = await fetchJson(`${base}/movie/${id}/videos?api_key=${api}`);
-  const t = data?.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
-  if (t) {
-    els.trailerBody.innerHTML = `<iframe src="https://www.youtube.com/embed/${t.key}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-    els.details.classList.remove('open');
-    els.trailer.classList.add('open');
-  } else {
-    alert('Trailer not available');
-  }
-};
-
-(async function init() {
-  initTheme();
-  
-  const ySel = els.year;
-  const currentYear = new Date().getFullYear();
-  for (let y = currentYear; y >= 2000; y--) {
+function loadYears() {
+  const current = new Date().getFullYear();
+  for (let y = current; y >= 2000; y--) {
     const opt = document.createElement('option');
     opt.value = y;
     opt.textContent = y;
-    ySel.appendChild(opt);
+    el.yearFilter.appendChild(opt);
   }
-  
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+function renderSkeletons(count = 12) {
+  el.grid.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'skeleton-card';
+    el.grid.appendChild(s);
+  }
+}
+
+function renderEmpty(message = 'No movies found', hint = 'Try a different search or loosen your filters.') {
+  el.grid.innerHTML = `
+    <div class="empty-state">
+      <h3>${message}</h3>
+      <p>${hint}</p>
+    </div>`;
+}
+
+function renderError() {
+  el.grid.innerHTML = `
+    <div class="error-state">
+      <h3>Something went wrong</h3>
+      <p>Check your TMDB API key in script.js, then refresh.</p>
+    </div>`;
+}
+
+function renderMovies(movies) {
+  el.grid.innerHTML = '';
+  if (!movies.length) {
+    renderEmpty();
+    return;
+  }
+  movies.forEach((movie, i) => {
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+    card.style.animationDelay = `${Math.min(i, 12) * 40}ms`;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+
+    const year = (movie.release_date || '').slice(0, 4) || '—';
+    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+    const poster = movie.poster_path ? IMG_POSTER + movie.poster_path : '';
+
+    card.innerHTML = `
+      <div class="card-img-wrap">
+        ${poster ? `<img class="card-img" src="${poster}" alt="${movie.title} poster" loading="lazy">` : `<div class="skeleton-card" style="border-radius:0;"></div>`}
+        <div class="card-vignette"></div>
+        <div class="rating-seal">${starIconSVG()}${rating}</div>
+        <div class="card-overlay">
+          <div class="card-title">${movie.title}</div>
+          <div class="card-meta"><span>${year}</span></div>
+          <div class="card-title-underline"></div>
+        </div>
+      </div>`;
+
+    const open = () => openDetails(movie.id);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+
+    el.grid.appendChild(card);
+  });
+}
+
+function updatePagination() {
+  el.prevBtn.classList.toggle('hidden', state.page <= 1);
+  el.nextBtn.classList.toggle('hidden', state.page >= state.totalPages);
+  el.pageIndicator.textContent = state.totalPages > 1 ? `Page ${state.page} of ${Math.min(state.totalPages, 500)}` : '';
+}
+
+// ---------------------------------------------------------------------------
+// Fetch + orchestrate
+// ---------------------------------------------------------------------------
+async function fetchMovies() {
+  renderSkeletons();
+  el.searchSpinner.classList.add('active');
+
+  try {
+    let data;
+    if (state.query.trim()) {
+      data = await tmdbFetch('/search/movie', {
+        query: state.query.trim(),
+        page: state.page,
+        primary_release_year: state.year,
+      });
+      // client-side refine for filters the search endpoint doesn't support
+      let results = data.results;
+      if (state.genre) results = results.filter((m) => m.genre_ids.includes(Number(state.genre)));
+      if (state.rating) results = results.filter((m) => m.vote_average >= Number(state.rating));
+      if (state.language) results = results.filter((m) => m.original_language === state.language);
+      state.totalPages = data.total_pages || 1;
+      renderMovies(results);
+    } else {
+      data = await tmdbFetch('/discover/movie', {
+        page: state.page,
+        sort_by: 'popularity.desc',
+        with_genres: state.genre,
+        primary_release_year: state.year,
+        'vote_average.gte': state.rating,
+        with_original_language: state.language,
+      });
+      state.totalPages = data.total_pages || 1;
+      renderMovies(data.results);
+    }
+    updatePagination();
+  } catch (err) {
+    console.error(err);
+    renderError();
+  } finally {
+    el.searchSpinner.classList.remove('active');
+  }
+}
+
+const debouncedSearch = debounce(() => {
+  state.page = 1;
+  fetchMovies();
+}, 500);
+
+// ---------------------------------------------------------------------------
+// Details modal
+// ---------------------------------------------------------------------------
+async function openDetails(id) {
+  el.detailsBody.innerHTML = `<div style="padding:60px;text-align:center;color:var(--text-secondary);width:100%;">Loading…</div>`;
+  el.detailsModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const movie = await tmdbFetch(`/movie/${id}`, { append_to_response: 'credits,videos' });
+    const poster = movie.poster_path ? IMG_POSTER + movie.poster_path : '';
+    const year = (movie.release_date || '').slice(0, 4) || '—';
+    const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '—';
+    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+    const genres = (movie.genres || []).slice(0, 3).map((g) => `<span class="badge">${g.name}</span>`).join('');
+    const cast = (movie.credits?.cast || []).slice(0, 5).map((c) => `
+      <div class="cast-member">
+        <img class="cast-img" src="${c.profile_path ? IMG_PROFILE + c.profile_path : 'https://placehold.co/58x58/14151d/8d90a3?text=%3F'}" alt="${c.name}" loading="lazy">
+        <span class="cast-name">${c.name}</span>
+      </div>`).join('');
+
+    const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
+      || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
+
+    el.detailsBody.innerHTML = `
+      ${poster ? `<img class="details-poster" src="${poster}" alt="${movie.title} poster">` : ''}
+      <div class="details-info">
+        <div class="details-title">${movie.title}</div>
+        <div class="details-meta">
+          <span class="rating-inline">${starIconSVG()}${rating}</span>
+          <span>${year}</span>
+          <span>·</span>
+          <span>${runtime}</span>
+        </div>
+        <div class="details-meta">${genres}</div>
+        <div>
+          <div class="section-label">Overview</div>
+          <p class="details-overview">${movie.overview || 'No overview available.'}</p>
+        </div>
+        ${cast ? `<div>
+          <div class="section-label">Top cast</div>
+          <div class="details-cast">${cast}</div>
+        </div>` : ''}
+        <div class="details-actions">
+          <button class="btn primary" id="watch-trailer-btn" ${trailer ? '' : 'disabled'}>
+            <span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span> Watch trailer
+          </button>
+          <a class="btn" href="${movie.homepage || `https://www.themoviedb.org/movie/${movie.id}`}" target="_blank" rel="noopener">
+            <span class="material-symbols-outlined" style="font-size:18px;">open_in_new</span> Watch movie
+          </a>
+        </div>
+      </div>`;
+
+    document.getElementById('watch-trailer-btn')?.addEventListener('click', () => {
+      if (trailer) openTrailer(trailer.key);
+    });
+  } catch (err) {
+    console.error(err);
+    el.detailsBody.innerHTML = `<div style="padding:60px;text-align:center;width:100%;">Couldn't load details. Please try again.</div>`;
+  }
+}
+
+function closeDetails() {
+  el.detailsModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ---------------------------------------------------------------------------
+// Trailer modal
+// ---------------------------------------------------------------------------
+function openTrailer(youtubeKey) {
+  el.trailerBody.innerHTML = `
+    <div class="aperture">
+      <svg viewBox="0 0 100 100">
+        ${Array.from({ length: 6 }).map((_, i) => `<rect class="blade" x="46" y="4" width="8" height="40" rx="2" transform="rotate(${i * 60} 50 50)"/>`).join('')}
+      </svg>
+    </div>`;
+  el.trailerModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => {
+    el.trailerBody.innerHTML = `<iframe src="${YOUTUBE_EMBED}${youtubeKey}?autoplay=1&rel=0" title="Trailer" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  }, 300);
+}
+
+function closeTrailer() {
+  el.trailerModal.classList.remove('open');
+  el.trailerBody.innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+// ---------------------------------------------------------------------------
+// Event wiring
+// ---------------------------------------------------------------------------
+el.searchInput.addEventListener('input', (e) => {
+  state.query = e.target.value;
+  debouncedSearch();
+});
+
+[el.genreFilter, el.yearFilter, el.ratingFilter, el.langFilter].forEach((select) => {
+  select.addEventListener('change', () => {
+    state.genre = el.genreFilter.value;
+    state.year = el.yearFilter.value;
+    state.rating = el.ratingFilter.value;
+    state.language = el.langFilter.value;
+    state.page = 1;
+    fetchMovies();
+  });
+});
+
+el.prevBtn.addEventListener('click', () => {
+  if (state.page > 1) {
+    state.page--;
+    fetchMovies();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+el.nextBtn.addEventListener('click', () => {
+  if (state.page < state.totalPages) {
+    state.page++;
+    fetchMovies();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+document.querySelectorAll('.close-modal').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    closeDetails();
+    closeTrailer();
+  });
+});
+
+[el.detailsModal, el.trailerModal].forEach((modal) => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) { closeDetails(); closeTrailer(); }
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { closeDetails(); closeTrailer(); closeDrawer(); }
+});
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+(async function init() {
+  loadYears();
   await loadGenres();
-  loadMovies();
+  fetchMovies();
 })();

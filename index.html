@@ -4,28 +4,31 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MidnightFlix | Smart Movie Discovery</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <meta name="description" content="Discover movies by mood, genre, year, rating and language — with trailers, cast and details, all in one late-night lobby.">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,300..500,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="light-mode">
+<body class="dark-mode">
     <nav class="top-nav">
-        <div class="logo">MidnightFlix</div>
-        <button id="settings-btn" class="icon-btn" aria-label="Settings">
-            <span class="material-symbols-outlined">settings</span>
+        <div class="logo"><span class="logo-accent">Midnight</span>Flix</div>
+        <button id="settings-btn" class="icon-btn" aria-label="Open settings">
+            <span class="material-symbols-outlined">tune</span>
         </button>
     </nav>
 
-    <aside id="settings-panel" class="settings-drawer">
+    <aside id="settings-panel" class="settings-drawer" aria-label="Settings">
         <div class="drawer-header">
             <h2>Settings</h2>
-            <button id="close-settings" class="icon-btn"><span class="material-symbols-outlined">close</span></button>
+            <button id="close-settings" class="icon-btn" aria-label="Close settings"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="drawer-content">
             <div class="setting-item">
-                <span>Dark Mode</span>
+                <span>
+                    Dark mode
+                    <span class="setting-hint">Best for late-night browsing</span>
+                </span>
                 <label class="switch">
-                    <input type="checkbox" id="theme-toggle">
+                    <input type="checkbox" id="theme-toggle" checked>
                     <span class="slider round"></span>
                 </label>
             </div>
@@ -34,51 +37,67 @@
     <div id="drawer-overlay" class="overlay"></div>
 
     <main class="container">
+        <div class="page-heading">
+            <h1>What's screening tonight?</h1>
+            <p>Search, filter, and settle in — trailers and cast are one click away.</p>
+        </div>
+
         <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" id="search-input" placeholder="Search movies...">
+                <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
+                <svg class="search-spinner" id="search-spinner" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="42" stroke-dashoffset="10">
+                        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
             </div>
             <div class="filters">
-                <select id="genre-filter"><option value="">All Genres</option></select>
-                <select id="year-filter"><option value="">Year</option></select>
-                <select id="rating-filter">
-                  <option value="">Rating</option>
-                  <option value="5">5+</option>
-                  <option value="6">6+</option>
-                  <option value="7">7+</option>
-                  <option value="8">8+</option>
-                  <option value="9">9+</option>
+                <select id="genre-filter" aria-label="Filter by genre"><option value="">All genres</option></select>
+                <select id="year-filter" aria-label="Filter by year"><option value="">Any year</option></select>
+                <select id="rating-filter" aria-label="Filter by rating">
+                  <option value="">Any rating</option>
+                  <option value="5">5+ ★</option>
+                  <option value="6">6+ ★</option>
+                  <option value="7">7+ ★</option>
+                  <option value="8">8+ ★</option>
+                  <option value="9">9+ ★</option>
                 </select>
-                <select id="lang-filter">
-                  <option value="">Language</option>
-                  <option value="en-US">English</option>
-                  <option value="hi-IN">Hindi</option>
+                <select id="lang-filter" aria-label="Filter by language">
+                  <option value="">Any language</option>
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
                 </select>
             </div>
         </div>
 
-        <div id="movie-grid" class="movie-grid">
-            <!-- Movie cards injected here -->
+        <div id="movie-grid" class="movie-grid" aria-live="polite">
+            <!-- Movie cards / skeletons injected here -->
         </div>
 
         <div class="pagination">
-            <button id="prev-btn" class="btn hidden">Previous</button>
-            <button id="next-btn" class="btn hidden">Next</button>
+            <button id="prev-btn" class="btn hidden">
+                <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span> Previous
+            </button>
+            <span id="page-indicator" class="page-indicator"></span>
+            <button id="next-btn" class="btn primary hidden">
+                Next <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+            </button>
         </div>
     </main>
 
-    <!-- Modals -->
+    <!-- Details Modal -->
     <div id="details-modal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal"><span class="material-symbols-outlined">close</span></button>
+            <button class="close-modal" aria-label="Close"><span class="material-symbols-outlined">close</span></button>
             <div id="details-body" class="details-body"></div>
         </div>
     </div>
 
+    <!-- Trailer Modal -->
     <div id="trailer-modal" class="modal-overlay">
         <div class="trailer-content">
-            <button class="close-modal"><span class="material-symbols-outlined">close</span></button>
+            <button class="close-modal" aria-label="Close trailer"><span class="material-symbols-outlined">close</span></button>
             <div id="trailer-body"></div>
         </div>
     </div>
