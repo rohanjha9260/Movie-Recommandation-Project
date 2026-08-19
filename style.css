@@ -271,7 +271,7 @@ input:checked + .slider::before { transform: translateX(20px); background-color:
 
 .container {
   padding: 96px clamp(16px, 5%, 48px) 60px;
-  max-width: 1600px;
+  max-width: 100%;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -477,19 +477,25 @@ input:checked + .slider::before { transform: translateX(20px); background-color:
 .filters select:hover { border-color: var(--accent); }
 .filters select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--focus-ring); }
 
+.filters select option {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
 /* Movie Grid */
 .movie-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  gap: 14px;
+  justify-items: center;
 }
 
-@media (min-width: 600px)  { .movie-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-@media (min-width: 900px)  { .movie-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 1200px) { .movie-grid { grid-template-columns: repeat(5, 1fr); } }
-@media (min-width: 1560px) { .movie-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 600px)  { .movie-grid { grid-template-columns: repeat(4, 1fr); gap: 24px; } }
+@media (min-width: 1024px) { .movie-grid { grid-template-columns: repeat(5, 1fr); gap: 32px; } }
 
 .movie-card {
+  width: 100%;
+  max-width: 250px;
   position: relative;
   border-radius: 16px;
   overflow: hidden;
