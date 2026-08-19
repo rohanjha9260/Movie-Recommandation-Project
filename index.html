@@ -10,7 +10,7 @@
 </head>
 <body class="dark-mode">
     <nav class="top-nav">
-        <div class="logo"><span class="logo-accent">Midnight</span>Flix</div>
+        <div class="logo" onclick="window.location.reload()" style="cursor: pointer;" title="Refresh Page"><span class="logo-accent">Midnight</span>Flix</div>
         <button id="settings-btn" class="icon-btn" aria-label="Open settings">
             <span class="material-symbols-outlined">tune</span>
         </button>
@@ -66,21 +66,37 @@
                 </svg>
             </div>
             <div class="filters">
-                <select id="genre-filter" aria-label="Filter by genre"><option value="">All genres</option></select>
-                <select id="year-filter" aria-label="Filter by year"><option value="">Any year</option></select>
-                <select id="rating-filter" aria-label="Filter by rating">
-                  <option value="">Any rating</option>
-                  <option value="5">5+ ★</option>
-                  <option value="6">6+ ★</option>
-                  <option value="7">7+ ★</option>
-                  <option value="8">8+ ★</option>
-                  <option value="9">9+ ★</option>
-                </select>
-                <select id="lang-filter" aria-label="Filter by language">
-                  <option value="">Any language</option>
-                  <option value="en">English</option>
-                  <option value="hi">Hindi</option>
-                </select>
+                <div class="custom-select-wrapper" id="genre-filter" data-key="genre">
+                  <div class="custom-select-trigger" data-value="">All genres</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">All genres</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="year-filter" data-key="year">
+                  <div class="custom-select-trigger" data-value="">Any year</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any year</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="rating-filter" data-key="rating">
+                  <div class="custom-select-trigger" data-value="">Any rating</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any rating</div>
+                    <div class="custom-option" data-value="5">5+ ★</div>
+                    <div class="custom-option" data-value="6">6+ ★</div>
+                    <div class="custom-option" data-value="7">7+ ★</div>
+                    <div class="custom-option" data-value="8">8+ ★</div>
+                    <div class="custom-option" data-value="9">9+ ★</div>
+                  </div>
+                </div>
+                <div class="custom-select-wrapper" id="lang-filter" data-key="language">
+                  <div class="custom-select-trigger" data-value="">Any language</div>
+                  <div class="custom-options">
+                    <div class="custom-option selected" data-value="">Any language</div>
+                    <div class="custom-option" data-value="en">English</div>
+                    <div class="custom-option" data-value="hi">Hindi</div>
+                  </div>
+                </div>
             </div>
         </div>
         </div> <!-- Close browse-view tab -->

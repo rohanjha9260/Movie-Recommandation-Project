@@ -132,12 +132,14 @@ async function tmdbFetch(path, params = {}) {
 async function loadGenres() {
   try {
     const data = await tmdbFetch('/genre/movie/list');
+    const optionsContainer = el.genreFilter.querySelector('.custom-options');
     data.genres.forEach((g) => {
       state.genreMap[g.id] = g.name;
-      const opt = document.createElement('option');
-      opt.value = g.id;
+      const opt = document.createElement('div');
+      opt.className = 'custom-option';
+      opt.setAttribute('data-value', g.id);
       opt.textContent = g.name;
-      el.genreFilter.appendChild(opt);
+      optionsContainer.appendChild(opt);
     });
   } catch (err) {
     console.error('Could not load genres:', err);
@@ -146,11 +148,13 @@ async function loadGenres() {
 
 function loadYears() {
   const current = new Date().getFullYear();
+  const optionsContainer = el.yearFilter.querySelector('.custom-options');
   for (let y = current; y >= 2000; y--) {
-    const opt = document.createElement('option');
-    opt.value = y;
+    const opt = document.createElement('div');
+    opt.className = 'custom-option';
+    opt.setAttribute('data-value', y);
     opt.textContent = y;
-    el.yearFilter.appendChild(opt);
+    optionsContainer.appendChild(opt);
   }
 }
 
@@ -434,14 +438,38 @@ el.searchInput.addEventListener('input', (e) => {
   debouncedSearch();
 });
 
-[el.genreFilter, el.yearFilter, el.ratingFilter, el.langFilter].forEach((select) => {
-  select.addEventListener('change', () => {
-    state.genre = el.genreFilter.value;
-    state.year = el.yearFilter.value;
-    state.rating = el.ratingFilter.value;
-    state.language = el.langFilter.value;
-    state.page = 1;
-    fetchMovies();
+// Custom Dropdown Logic
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select-wrapper')) {
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+  }
+});
+
+[el.genreFilter, el.yearFilter, el.ratingFilter, el.langFilter].forEach((wrapper) => {
+  if (!wrapper) return;
+  const trigger = wrapper.querySelector('.custom-select-trigger');
+  
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = wrapper.classList.contains('open');
+    document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+    if (!isOpen) wrapper.classList.add('open');
+  });
+
+  wrapper.addEventListener('click', (e) => {
+    const option = e.target.closest('.custom-option');
+    if (option) {
+      wrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+      trigger.textContent = option.textContent;
+      trigger.setAttribute('data-value', option.getAttribute('data-value'));
+      wrapper.classList.remove('open');
+      
+      const key = wrapper.getAttribute('data-key');
+      if (key) state[key] = option.getAttribute('data-value');
+      state.page = 1;
+      fetchMovies();
+    }
   });
 });
 
