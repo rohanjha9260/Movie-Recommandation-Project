@@ -9,7 +9,7 @@
    ========================================================================== */
 
 const TMDB_API_KEY = 'b608fa72f7a0480576a94d846193263d';
-const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_BASE = 'https://api.tmdb.org/3';
 const IMG_POSTER = 'https://image.tmdb.org/t/p/w500';
 const IMG_PROFILE = 'https://image.tmdb.org/t/p/w185';
 const IMG_PROVIDER = 'https://image.tmdb.org/t/p/w92';
