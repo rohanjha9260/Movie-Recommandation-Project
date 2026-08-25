@@ -7,7 +7,7 @@ MidnightFlix is a premium, client-side movie discovery and recommendation web ap
 ## 🏗️ Architecture Overview
 
 MidnightFlix is built as a **decoupled, client-side single-page application (SPA)** utilizing simple, dependency-free web technologies:
-
+ 
 ```mermaid
 graph TD
     UI[HTML5 / CSS3 Layouts] <--> JS[script.js Controller]
