@@ -55,10 +55,18 @@
         </div>
 
         <div id="browse-view" class="tab-content active">
+            <!-- Cinema Industry Quick Filter Pills -->
+            <div class="cinema-pills" id="cinema-pills">
+                <button class="cinema-pill active" data-cinema="indian">🇮🇳 All Indian Cinema</button>
+                <button class="cinema-pill" data-cinema="bollywood">🍿 Bollywood</button>
+                <button class="cinema-pill" data-cinema="south">⚡ South Indian</button>
+                <button class="cinema-pill" data-cinema="hollywood">🌎 Hollywood & Global</button>
+            </div>
+
             <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
+                <input type="text" id="search-input" placeholder="Search movies, actors, titles…" autocomplete="off">
                 <svg class="search-spinner" id="search-spinner" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="42" stroke-dashoffset="10">
                         <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
@@ -90,11 +98,12 @@
                   </div>
                 </div>
                 <div class="custom-select-wrapper" id="lang-filter" data-key="language">
-                  <div class="custom-select-trigger" data-value="">Any language</div>
+                  <div class="custom-select-trigger" data-value="">All languages</div>
                   <div class="custom-options">
-                    <div class="custom-option selected" data-value="">Any language</div>
-                    <div class="custom-option" data-value="en">English</div>
-                    <div class="custom-option" data-value="hi">Hindi</div>
+                    <div class="custom-option selected" data-value="">All languages</div>
+                    <div class="custom-option" data-value="hi">Hindi (Bollywood)</div>
+                    <div class="custom-option" data-value="te|ta|ml|kn">South Indian (Telugu, Tamil, etc.)</div>
+                    <div class="custom-option" data-value="en">English (Hollywood)</div>
                   </div>
                 </div>
             </div>

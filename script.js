@@ -20,6 +20,7 @@ const YOUTUBE_EMBED = 'https://www.youtube.com/embed/';
 // ---------------------------------------------------------------------------
 const state = {
   query: '',
+  cinema: 'indian', // indian | bollywood | south | hollywood
   genre: '',
   year: '',
   rating: '',
@@ -36,6 +37,7 @@ const state = {
 // ---------------------------------------------------------------------------
 const el = {
   grid: document.getElementById('movie-grid'),
+  cinemaPills: document.querySelectorAll('.cinema-pill'),
   searchInput: document.getElementById('search-input'),
   searchSpinner: document.getElementById('search-spinner'),
   genreFilter: document.getElementById('genre-filter'),
@@ -243,25 +245,57 @@ async function fetchMovies() {
         query: state.query.trim(),
         page: state.page,
         primary_release_year: state.year,
+        region: 'IN',
       });
       // client-side refine for filters the search endpoint doesn't support
-      let results = data.results;
-      if (state.genre) results = results.filter((m) => m.genre_ids.includes(Number(state.genre)));
+      let results = data.results || [];
+      if (state.genre) results = results.filter((m) => m.genre_ids && m.genre_ids.includes(Number(state.genre)));
       if (state.rating) results = results.filter((m) => m.vote_average >= Number(state.rating));
-      if (state.language) results = results.filter((m) => m.original_language === state.language);
+      if (state.language) {
+        const targetLangs = state.language.split('|');
+        results = results.filter((m) => targetLangs.includes(m.original_language));
+      } else if (state.cinema === 'bollywood') {
+        results = results.filter((m) => m.original_language === 'hi');
+      } else if (state.cinema === 'south') {
+        const southLangs = ['te', 'ta', 'ml', 'kn'];
+        results = results.filter((m) => southLangs.includes(m.original_language));
+      } else if (state.cinema === 'hollywood') {
+        results = results.filter((m) => m.original_language === 'en');
+      }
       state.totalPages = data.total_pages || 1;
       renderMovies(results);
     } else {
-      data = await tmdbFetch('/discover/movie', {
+      const params = {
         page: state.page,
         sort_by: 'popularity.desc',
         with_genres: state.genre,
         primary_release_year: state.year,
         'vote_average.gte': state.rating,
-        with_original_language: state.language,
-      });
+        region: 'IN',
+      };
+
+      if (state.language) {
+        params.with_original_language = state.language;
+        if (state.language === 'hi' || state.language.includes('te')) {
+          params.with_origin_country = 'IN';
+        }
+      } else {
+        if (state.cinema === 'indian') {
+          params.with_origin_country = 'IN';
+        } else if (state.cinema === 'bollywood') {
+          params.with_original_language = 'hi';
+          params.with_origin_country = 'IN';
+        } else if (state.cinema === 'south') {
+          params.with_original_language = 'te|ta|ml|kn';
+          params.with_origin_country = 'IN';
+        } else if (state.cinema === 'hollywood') {
+          params.with_original_language = 'en';
+        }
+      }
+
+      data = await tmdbFetch('/discover/movie', params);
       state.totalPages = data.total_pages || 1;
-      renderMovies(data.results);
+      renderMovies(data.results || []);
     }
     updatePagination();
   } catch (err) {
@@ -301,12 +335,11 @@ async function openDetails(id) {
     const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
       || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
 
-    // Parse Watch Providers
+    // Parse Watch Providers (prioritize India OTT)
     const providersData = movie['watch/providers']?.results;
     let regionData = null;
     if (providersData) {
-      const preferredRegion = state.language === 'hi' ? 'IN' : 'US';
-      regionData = providersData[preferredRegion] || providersData.IN || providersData.US || Object.values(providersData)[0];
+      regionData = providersData.IN || providersData.US || Object.values(providersData)[0];
     }
 
     const flatrate = regionData?.flatrate || [];
@@ -438,6 +471,31 @@ el.searchInput.addEventListener('input', (e) => {
   debouncedSearch();
 });
 
+// Cinema Industry Pills
+if (el.cinemaPills) {
+  el.cinemaPills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      el.cinemaPills.forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      state.cinema = pill.getAttribute('data-cinema');
+
+      // Reset specific language filter when switching cinema pill
+      state.language = '';
+      const langTrigger = el.langFilter?.querySelector('.custom-select-trigger');
+      if (langTrigger) {
+        langTrigger.textContent = 'All languages';
+        langTrigger.setAttribute('data-value', '');
+        el.langFilter?.querySelectorAll('.custom-option').forEach((opt, idx) => {
+          opt.classList.toggle('selected', idx === 0);
+        });
+      }
+
+      state.page = 1;
+      fetchMovies();
+    });
+  });
+}
+
 // Custom Dropdown Logic
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.custom-select-wrapper')) {
@@ -565,7 +623,7 @@ const moodConfigs = {
   'adrenaline': { genres: '28,12', sort: 'popularity.desc' }, // Action, Adventure
   'feel-good': { genres: '35,10749', sort: 'popularity.desc' }, // Comedy, Romance
   'dark-gritty': { genres: '27,80', sort: 'popularity.desc' }, // Horror, Crime
-  'classic-hits': { genres: '', sort: 'vote_average.desc', 'vote_count.gte': 5000 } 
+  'classic-hits': { genres: '', sort: 'vote_average.desc', 'vote_count.gte': 40, 'vote_average.gte': 7.2 } 
 };
 
 el.moodCards.forEach(card => {
@@ -583,12 +641,26 @@ el.moodCards.forEach(card => {
       const params = {
         page: 1,
         sort_by: config.sort,
-        with_genres: config.genres
+        with_genres: config.genres,
+        region: 'IN'
       };
       if (config['vote_count.gte']) params['vote_count.gte'] = config['vote_count.gte'];
+      if (config['vote_average.gte']) params['vote_average.gte'] = config['vote_average.gte'];
+      
+      if (state.cinema === 'bollywood') {
+        params.with_original_language = 'hi';
+        params.with_origin_country = 'IN';
+      } else if (state.cinema === 'south') {
+        params.with_original_language = 'te|ta|ml|kn';
+        params.with_origin_country = 'IN';
+      } else if (state.cinema === 'hollywood') {
+        params.with_original_language = 'en';
+      } else {
+        params.with_origin_country = 'IN';
+      }
       
       const data = await tmdbFetch('/discover/movie', params);
-      renderMovies(data.results);
+      renderMovies(data.results || []);
       updatePagination(true);
     } catch (e) {
       console.error(e);
@@ -601,7 +673,7 @@ el.moodCards.forEach(card => {
 // Rec Engine: Quiz
 // ---------------------------------------------------------------------------
 let quizDebounceTimer;
-if(el.quizInput) {
+if (el.quizInput) {
   el.quizInput.addEventListener('input', (e) => {
     clearTimeout(quizDebounceTimer);
     const q = e.target.value.trim();
@@ -612,8 +684,8 @@ if(el.quizInput) {
     
     quizDebounceTimer = setTimeout(async () => {
       try {
-        const data = await tmdbFetch('/search/movie', { query: q, page: 1 });
-        const results = data.results.slice(0, 5);
+        const data = await tmdbFetch('/search/movie', { query: q, page: 1, region: 'IN' });
+        const results = (data.results || []).slice(0, 6);
         
         if (results.length > 0) {
           el.quizDropdown.innerHTML = results.map(m => `
@@ -629,11 +701,11 @@ if(el.quizInput) {
       } catch (err) {
         console.error(err);
       }
-    }, 400);
+    }, 350);
   });
 }
 
-if(el.quizDropdown) {
+if (el.quizDropdown) {
   el.quizDropdown.addEventListener('click', (e) => {
     const item = e.target.closest('.quiz-dropdown-item');
     if (item) {
@@ -655,7 +727,7 @@ function renderQuizTags() {
   el.quizTags.innerHTML = state.quizSelectedMovies.map(m => `
     <div class="selected-tag">
       ${m.title}
-      <button onclick="removeQuizMovie('${m.id}')"><span class="material-symbols-outlined" style="font-size:16px;">close</span></button>
+      <button onclick="removeQuizMovie('${m.id}')" aria-label="Remove ${m.title.replace(/"/g, '&quot;')}"><span class="material-symbols-outlined" style="font-size:16px;">close</span></button>
     </div>
   `).join('');
   el.quizBtn.disabled = state.quizSelectedMovies.length === 0;
@@ -666,37 +738,174 @@ window.removeQuizMovie = function(id) {
   renderQuizTags();
 };
 
-if(el.quizBtn) {
+if (el.quizBtn) {
   el.quizBtn.addEventListener('click', async () => {
     if (state.quizSelectedMovies.length === 0) return;
     
-    el.resultsTitle.textContent = `Curated for you`;
+    el.resultsTitle.textContent = `Curated for your playlist`;
     el.resultsTitle.classList.remove('hidden');
     renderSkeletons();
     
     try {
-      const promises = state.quizSelectedMovies.map(m => tmdbFetch(`/movie/${m.id}/recommendations`));
-      const responses = await Promise.all(promises);
-      
-      const merged = {};
+      // 1. Fetch complete metadata for each selected movie
+      const detailPromises = state.quizSelectedMovies.map(m => 
+        tmdbFetch(`/movie/${m.id}`, { append_to_response: 'credits,recommendations,similar' })
+      );
+      const movieDetails = await Promise.all(detailPromises);
       const selectedIds = new Set(state.quizSelectedMovies.map(m => Number(m.id)));
       
-      responses.forEach(res => {
-        res.results.forEach(m => {
+      // 2. Profile Analysis
+      const langCounts = {};
+      const genreCounts = {};
+      const indianLanguages = new Set(['hi', 'te', 'ta', 'ml', 'kn', 'mr', 'bn', 'pa', 'gu']);
+      let indianCount = 0;
+      
+      movieDetails.forEach(d => {
+        const lang = d.original_language;
+        langCounts[lang] = (langCounts[lang] || 0) + 1;
+        if (indianLanguages.has(lang)) indianCount++;
+        
+        const countries = d.origin_country || (d.production_countries || []).map(c => c.iso_3166_1);
+        if (countries.includes('IN')) indianCount++;
+        
+        (d.genres || []).forEach(g => {
+          genreCounts[g.id] = (genreCounts[g.id] || 0) + 1;
+        });
+      });
+      
+      const isIndianProfile = indianCount >= movieDetails.length;
+      const dominantLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'hi';
+      const topGenres = Object.entries(genreCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(e => e[0])
+        .join(',');
+      
+      // 3. Multi-layer candidate retrieval
+      const candidateMap = new Map();
+      
+      // A. Include TMDB native recommendations & similar
+      movieDetails.forEach(d => {
+        const tmdbRecs = [...(d.recommendations?.results || []), ...(d.similar?.results || [])];
+        tmdbRecs.forEach(m => {
           if (!selectedIds.has(m.id)) {
-            if (!merged[m.id]) {
-              merged[m.id] = { ...m, count: 1 };
+            if (!candidateMap.has(m.id)) {
+              candidateMap.set(m.id, { movie: m, sourceCount: 1, isDirectRec: true });
             } else {
-              merged[m.id].count++;
+              candidateMap.get(m.id).sourceCount++;
             }
           }
         });
       });
       
-      const finalRecs = Object.values(merged).sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count;
-        return b.popularity - a.popularity;
-      }).slice(0, 20);
+      // B. Smart Discover tailored to the cultural profile and genres
+      const discoverPromises = [];
+      if (isIndianProfile) {
+        // High-rated Indian movies matching genres
+        discoverPromises.push(
+          tmdbFetch('/discover/movie', {
+            with_genres: topGenres,
+            with_origin_country: 'IN',
+            with_original_language: dominantLang === 'hi' ? 'hi' : (indianLanguages.has(dominantLang) ? dominantLang : undefined),
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': 25,
+            region: 'IN',
+            page: 1,
+          })
+        );
+        // Popular Indian movies matching genres
+        discoverPromises.push(
+          tmdbFetch('/discover/movie', {
+            with_genres: topGenres,
+            with_origin_country: 'IN',
+            sort_by: 'popularity.desc',
+            region: 'IN',
+            page: 1,
+          })
+        );
+      } else {
+        // Hollywood / Global discover in matching genres
+        discoverPromises.push(
+          tmdbFetch('/discover/movie', {
+            with_genres: topGenres,
+            with_original_language: 'en',
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': 400,
+            page: 1,
+          })
+        );
+        discoverPromises.push(
+          tmdbFetch('/discover/movie', {
+            with_genres: topGenres,
+            with_original_language: 'en',
+            sort_by: 'popularity.desc',
+            page: 1,
+          })
+        );
+      }
+      
+      const discoverResponses = await Promise.all(discoverPromises);
+      discoverResponses.forEach(res => {
+        (res.results || []).forEach(m => {
+          if (!selectedIds.has(m.id)) {
+            if (!candidateMap.has(m.id)) {
+              candidateMap.set(m.id, { movie: m, sourceCount: 1, isDiscover: true });
+            } else {
+              candidateMap.get(m.id).sourceCount += 1.5;
+            }
+          }
+        });
+      });
+      
+      // 4. Score and Rank Candidates
+      const selectedGenreIds = new Set(Object.keys(genreCounts).map(Number));
+      const scoredCandidates = [];
+      
+      candidateMap.forEach(({ movie, sourceCount, isDirectRec, isDiscover }) => {
+        let score = 0;
+        const isCandidateIndian = indianLanguages.has(movie.original_language);
+        
+        // Cultural consistency score
+        if (isIndianProfile) {
+          if (isCandidateIndian) {
+            score += 70;
+            if (movie.original_language === dominantLang) score += 25;
+          } else if (movie.original_language === 'en') {
+            score -= 75; // Heavily penalize Hollywood movies when user selected Indian/Bollywood movies
+          }
+        } else {
+          if (movie.original_language === 'en') {
+            score += 60;
+          } else if (isCandidateIndian) {
+            score -= 30;
+          }
+        }
+        
+        // Genre overlap score (+20 for each matching genre)
+        const candidateGenres = movie.genre_ids || [];
+        let matchingGenres = 0;
+        candidateGenres.forEach(gid => {
+          if (selectedGenreIds.has(gid)) matchingGenres++;
+        });
+        score += matchingGenres * 20;
+        
+        // Source boost
+        score += sourceCount * 25;
+        if (isDirectRec) score += 15;
+        if (isDiscover) score += 20;
+        
+        // Rating & popularity boost
+        if (movie.vote_average) score += movie.vote_average * 4;
+        if (movie.popularity) score += Math.min(movie.popularity, 25);
+        
+        // Quality check: must have a poster and positive vote average
+        if (movie.poster_path && movie.vote_average > 0) {
+          scoredCandidates.push({ movie, score });
+        }
+      });
+      
+      scoredCandidates.sort((a, b) => b.score - a.score);
+      const finalRecs = scoredCandidates.slice(0, 20).map(c => c.movie);
       
       renderMovies(finalRecs);
       updatePagination(true);

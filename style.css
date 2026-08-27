@@ -378,6 +378,48 @@ input:checked + .slider::before { transform: translateX(20px); background-color:
 .rec-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 10px; border: 1px solid var(--surface-border); margin-bottom: 8px; }
 .rec-card .rec-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 
+/* Cinema Industry Pills */
+.cinema-pills {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.cinema-pills::-webkit-scrollbar { display: none; }
+
+.cinema-pill {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 99px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cinema-pill:hover {
+  color: var(--text-primary);
+  background: var(--surface-strong);
+  border-color: rgba(242, 183, 5, 0.3);
+  transform: translateY(-1px);
+}
+
+.cinema-pill.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .search-filter-bar {
   display: flex;
   flex-direction: column;
