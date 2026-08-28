@@ -2,7 +2,7 @@
 
 MidnightFlix is a premium, client-side movie discovery and recommendation web application. It features a fully responsive cinematic UI with dark/light themes, search/filtering options, trailer embedding, and detailed movie breakdowns.
 
----
+---  
 
 ## 🏗️ Architecture Overview
 
