@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-mode">
+    <div id="canvas-container"></div>
     <nav class="top-nav">
         <div class="logo" onclick="window.location.reload()" style="cursor: pointer;" title="Refresh Page"><span class="logo-accent">Midnight</span>Flix</div>
         <button id="settings-btn" class="icon-btn" aria-label="Open settings">
@@ -43,8 +44,17 @@
         </div>
 
         <div class="tabs-nav">
-            <button class="tab-btn active" data-target="browse-view">
-                <span class="material-symbols-outlined">grid_view</span> Browse
+            <button class="tab-btn active" data-target="browse-view" data-cinema="indian">
+                🇮🇳 All Indian Cinema
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="bollywood">
+                🍿 Bollywood
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="south">
+                ⚡ South Indian
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="hollywood">
+                🌎 Hollywood & Global
             </button>
             <button class="tab-btn" data-target="mood-view">
                 <span class="material-symbols-outlined">mood</span> Mood Engine
@@ -58,7 +68,7 @@
             <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" id="search-input" placeholder="Search movies…" autocomplete="off">
+                <input type="text" id="search-input" placeholder="Search movies, actors, titles…" autocomplete="off">
                 <svg class="search-spinner" id="search-spinner" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="42" stroke-dashoffset="10">
                         <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
@@ -90,11 +100,12 @@
                   </div>
                 </div>
                 <div class="custom-select-wrapper" id="lang-filter" data-key="language">
-                  <div class="custom-select-trigger" data-value="">Any language</div>
+                  <div class="custom-select-trigger" data-value="">All languages</div>
                   <div class="custom-options">
-                    <div class="custom-option selected" data-value="">Any language</div>
-                    <div class="custom-option" data-value="en">English</div>
-                    <div class="custom-option" data-value="hi">Hindi</div>
+                    <div class="custom-option selected" data-value="">All languages</div>
+                    <div class="custom-option" data-value="hi">Hindi (Bollywood)</div>
+                    <div class="custom-option" data-value="te|ta|ml|kn">South Indian (Telugu, Tamil, etc.)</div>
+                    <div class="custom-option" data-value="en">English (Hollywood)</div>
                   </div>
                 </div>
             </div>
@@ -184,6 +195,7 @@
         </div>
     </div>
 
+    <script type="module" src="three-scene.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
