@@ -37,7 +37,6 @@ const state = {
 // ---------------------------------------------------------------------------
 const el = {
   grid: document.getElementById('movie-grid'),
-  cinemaPills: document.querySelectorAll('.cinema-pill'),
   searchInput: document.getElementById('search-input'),
   searchSpinner: document.getElementById('search-spinner'),
   genreFilter: document.getElementById('genre-filter'),
@@ -471,31 +470,6 @@ el.searchInput.addEventListener('input', (e) => {
   debouncedSearch();
 });
 
-// Cinema Industry Pills
-if (el.cinemaPills) {
-  el.cinemaPills.forEach((pill) => {
-    pill.addEventListener('click', () => {
-      el.cinemaPills.forEach((p) => p.classList.remove('active'));
-      pill.classList.add('active');
-      state.cinema = pill.getAttribute('data-cinema');
-
-      // Reset specific language filter when switching cinema pill
-      state.language = '';
-      const langTrigger = el.langFilter?.querySelector('.custom-select-trigger');
-      if (langTrigger) {
-        langTrigger.textContent = 'All languages';
-        langTrigger.setAttribute('data-value', '');
-        el.langFilter?.querySelectorAll('.custom-option').forEach((opt, idx) => {
-          opt.classList.toggle('selected', idx === 0);
-        });
-      }
-
-      state.page = 1;
-      fetchMovies();
-    });
-  });
-}
-
 // Custom Dropdown Logic
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.custom-select-wrapper')) {
@@ -565,7 +539,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------------------------------------------------------------------------
-// Rec Engine: Tabs
+// Rec Engine: Tabs & Regional Cinema Filters
 // ---------------------------------------------------------------------------
 el.tabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -588,6 +562,21 @@ el.tabs.forEach(tab => {
     // Logic update
     el.resultsTitle.classList.add('hidden');
     if (state.currentMode === 'browse') {
+      const cinema = tab.getAttribute('data-cinema') || 'indian';
+      state.cinema = cinema;
+
+      // Reset specific language filter dropdown when switching cinema
+      state.language = '';
+      const langTrigger = el.langFilter?.querySelector('.custom-select-trigger');
+      if (langTrigger) {
+        langTrigger.textContent = 'All languages';
+        langTrigger.setAttribute('data-value', '');
+        el.langFilter?.querySelectorAll('.custom-option').forEach((opt, idx) => {
+          opt.classList.toggle('selected', idx === 0);
+        });
+      }
+
+      state.page = 1;
       fetchMovies();
     } else if (state.currentMode === 'mood') {
       el.grid.innerHTML = '';

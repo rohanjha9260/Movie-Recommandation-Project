@@ -44,8 +44,17 @@
         </div>
 
         <div class="tabs-nav">
-            <button class="tab-btn active" data-target="browse-view">
-                <span class="material-symbols-outlined">grid_view</span> Browse
+            <button class="tab-btn active" data-target="browse-view" data-cinema="indian">
+                🇮🇳 All Indian Cinema
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="bollywood">
+                🍿 Bollywood
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="south">
+                ⚡ South Indian
+            </button>
+            <button class="tab-btn" data-target="browse-view" data-cinema="hollywood">
+                🌎 Hollywood & Global
             </button>
             <button class="tab-btn" data-target="mood-view">
                 <span class="material-symbols-outlined">mood</span> Mood Engine
@@ -56,14 +65,6 @@
         </div>
 
         <div id="browse-view" class="tab-content active">
-            <!-- Cinema Industry Quick Filter Pills -->
-            <div class="cinema-pills" id="cinema-pills">
-                <button class="cinema-pill active" data-cinema="indian">🇮🇳 All Indian Cinema</button>
-                <button class="cinema-pill" data-cinema="bollywood">🍿 Bollywood</button>
-                <button class="cinema-pill" data-cinema="south">⚡ South Indian</button>
-                <button class="cinema-pill" data-cinema="hollywood">🌎 Hollywood & Global</button>
-            </div>
-
             <div class="search-filter-bar">
             <div class="search-box">
                 <span class="material-symbols-outlined search-icon">search</span>
