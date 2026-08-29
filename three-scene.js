@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import * as THREE from 'https://unpkg.com/three@0.185.1/build/three.module.js';
 
 let scene, camera, renderer;
 let dustPoints, starsPoints;

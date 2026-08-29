@@ -406,7 +406,7 @@ input:checked + .slider::before { transform: translateX(20px); background-color:
 }
 .mood-icon { font-size: 32px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .mood-card:hover .mood-icon { transform: scale(1.15) rotate(4deg); }
-.mood-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; color: var(--text-primary); }
+.mood-title { font-family: Fraunces, serif; font-size: 18px; font-weight: 600; color: var(--text-primary); }
 .mood-desc { font-size: 13px; color: var(--text-secondary); }
 
 .quiz-container { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 20px; padding: 32px; max-width: 700px; margin: 0 auto; backdrop-filter: blur(16px); }
@@ -423,10 +423,10 @@ input:checked + .slider::before { transform: translateX(20px); background-color:
 @keyframes pop-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
 .selected-tag button { background: none; border: none; color: inherit; cursor: pointer; display: flex; opacity: 0.7; transition: transform 0.2s, opacity 0.2s; }
 .selected-tag button:hover { opacity: 1; transform: scale(1.2); }
-.results-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--surface-border); }
+.results-title { font-family: Fraunces, serif; font-size: 22px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--surface-border); }
 
 .modal-recommendations { margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--surface-border); width: 100%; }
-.modal-recommendations h3 { font-family: 'Fraunces', serif; font-size: 20px; margin-bottom: 16px; }
+.modal-recommendations h3 { font-family: Fraunces, serif; font-size: 20px; margin-bottom: 16px; }
 .recommendations-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: thin; }
 .recommendations-scroll::-webkit-scrollbar { height: 6px; }
 .recommendations-scroll::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 6px; }

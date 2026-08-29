@@ -9,7 +9,7 @@
    ========================================================================== */
 
 const TMDB_API_KEY = 'b608fa72f7a0480576a94d846193263d';
-const TMDB_BASE = 'https://api.tmdb.org/3';
+const TMDB_BASE = window.TMDB_BASE || 'https://api.tmdb.org/3';
 const IMG_POSTER = 'https://image.tmdb.org/t/p/w500';
 const IMG_PROFILE = 'https://image.tmdb.org/t/p/w185';
 const IMG_PROVIDER = 'https://image.tmdb.org/t/p/w92';
@@ -612,7 +612,7 @@ const moodConfigs = {
   'adrenaline': { genres: '28,12', sort: 'popularity.desc' }, // Action, Adventure
   'feel-good': { genres: '35,10749', sort: 'popularity.desc' }, // Comedy, Romance
   'dark-gritty': { genres: '27,80', sort: 'popularity.desc' }, // Horror, Crime
-  'classic-hits': { genres: '', sort: 'vote_average.desc', 'vote_count.gte': 40, 'vote_average.gte': 7.2 } 
+  'classic-hits': { genres: '', sort: 'vote_average.desc', 'vote_count.gte': 300, 'vote_average.gte': 7.2 } 
 };
 
 el.moodCards.forEach(card => {
@@ -747,22 +747,25 @@ if (el.quizBtn) {
       const langCounts = {};
       const genreCounts = {};
       const indianLanguages = new Set(['hi', 'te', 'ta', 'ml', 'kn', 'mr', 'bn', 'pa', 'gu']);
-      let indianCount = 0;
+      let indianSelections = 0;
       
       movieDetails.forEach(d => {
         const lang = d.original_language;
         langCounts[lang] = (langCounts[lang] || 0) + 1;
-        if (indianLanguages.has(lang)) indianCount++;
         
-        const countries = d.origin_country || (d.production_countries || []).map(c => c.iso_3166_1);
-        if (countries.includes('IN')) indianCount++;
+        const countries = (d.origin_country && d.origin_country.length > 0)
+          ? d.origin_country
+          : (d.production_countries || []).map(c => c.iso_3166_1);
+        
+        const isIndian = indianLanguages.has(lang) || countries.includes('IN');
+        if (isIndian) indianSelections++;
         
         (d.genres || []).forEach(g => {
           genreCounts[g.id] = (genreCounts[g.id] || 0) + 1;
         });
       });
       
-      const isIndianProfile = indianCount >= movieDetails.length;
+      const isIndianProfile = movieDetails.length > 0 && (indianSelections / movieDetails.length) >= 0.5;
       const dominantLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'hi';
       const topGenres = Object.entries(genreCounts)
         .sort((a, b) => b[1] - a[1])
